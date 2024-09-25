@@ -12,4 +12,4 @@ val Pink40 = Color(0xFF7D5260)
 
 val DarkSurface = Color(0xFF0E1418)
 val DarkSurfaceContainer = Color(0xFF1A2024)
-val DarkOnSurface = Color(0xFFBAC0C7)
+val DarkOnSurface = Color(0xFF40464A)

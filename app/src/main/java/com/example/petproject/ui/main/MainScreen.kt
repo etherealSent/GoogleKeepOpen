@@ -1,17 +1,24 @@
 package com.example.petproject.ui.main
 
 import android.content.res.Configuration
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.layout.LazyLayout
+import androidx.compose.foundation.lazy.layout.LazyLayoutItemProvider
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -23,12 +30,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.SubcomposeLayout
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.petproject.R
 import com.example.petproject.model.NoteUi
@@ -80,33 +93,65 @@ fun NotesCategoryName(
 
 @Composable
 fun Note(noteUi: NoteUi) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(5.dp))
-            .border(
-                width = 1.dp,
-                color = Color(0xFF40464A),
-                shape = RoundedCornerShape(5.dp)
+    BoxWithConstraints {
+        val parentWidth = maxWidth
+        Column(
+            modifier = Modifier
+                .width(parentWidth)
+                .clip(RoundedCornerShape(5.dp))
+                .border(
+                    width = 1.dp,
+                    color = Color(0xFF40464A),
+                    shape = RoundedCornerShape(5.dp)
+                )
+                .padding(vertical = 8.dp, horizontal = 8.dp)
+        ) {
+            Text(
+                text = noteUi.name,
+                style = MaterialTheme.typography.titleMedium,
+                color = Color(0xFFDBE1E5)
             )
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-    ) {
-        Text(
-            text = noteUi.name,
-            style = MaterialTheme.typography.titleMedium,
-            color = Color(0xFFDBE1E5)
-        )
-        
-        Spacer(modifier = Modifier.height(10.dp))
 
-        Text(
-            text = noteUi.content,
-            style = MaterialTheme.typography.bodySmall,
-            color = Color(0xFFDBE1E5)
-        )
+            Spacer(modifier = Modifier.height(10.dp))
 
-        Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = noteUi.content,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFFDBE1E5)
+            )
 
+            Spacer(modifier = Modifier.height(10.dp))
+
+            TagsLayout(tags = noteUi.tags)
+        }
+    }
+}
+
+@Composable
+fun TagsLayout(tags: List<TagUi>) {
+    SubcomposeLayout { constraints ->
+        var currentX = 0
+        var currentY= 0
+
+        val tagPlaceables = tags.map { tag ->
+            subcompose(tag) { Tag(name = tag.name) }.first().measure(constraints)
+        }
+
+        // all has one height
+        val height = tagPlaceables[0].height
+
+        layout(constraints.maxWidth, height) {
+            tagPlaceables.forEach { placeable ->
+
+                if (currentX + placeable.width <= constraints.maxWidth) {
+                    placeable.placeRelative(currentX, currentY)
+
+                    currentX += placeable.width + 8.dp.roundToPx()
+                } else {
+                    return@forEach
+                }
+            }
+        }
     }
 }
 
@@ -114,7 +159,10 @@ fun Note(noteUi: NoteUi) {
 fun CategoryNotesBlock(
     noteUis: List<NoteUi>,
 ) {
-    LazyColumn {
+    LazyColumn(modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = 8.dp, vertical = 8.dp)
+    ) {
         items(noteUis) { note ->
             Note(note)
         }
@@ -164,22 +212,19 @@ fun BottomBar() {
 fun Tag(
     name: String
 ) {
-    Box {
-        Text(
-            modifier = Modifier
-                .clip(RoundedCornerShape(12.dp))
-                .border(
-                    width = 1.dp,
-                    color = Color(0xFF40464A),
-                    shape = RoundedCornerShape(12.dp)
-                )
-                .background(Color(0xFF3D4548))
-                .padding(vertical = 4.dp, horizontal = 8.dp),
-            text = name,
-            maxLines = 1,
-            color = Color(0xFFBAC0C7)
+    Text(
+        modifier = Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .border(
+                width = 1.dp,
+                color = Color(0xFF40464A),
+                shape = RoundedCornerShape(12.dp)
+            )
+            .background(Color(0xFF3D4548))
+            .padding(vertical = 4.dp, horizontal = 8.dp),
+        text = name,
+        color = Color(0xFFBAC0C7)
         )
-    }
 }
 
 @Composable
@@ -225,7 +270,9 @@ fun NotePreview() {
                 "content",
                 listOf(
                     TagUi(0, "tag"),
-                    TagUi(0, "tag")
+                    TagUi(1, "tag"),
+                    TagUi(2, "tagaaaaaaaaaffffffffffffff"),
+                    TagUi(3, "jkkkk")
                 )
             )
         )

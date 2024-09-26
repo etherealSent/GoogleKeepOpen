@@ -30,6 +30,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -37,6 +38,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.vectorResource
@@ -129,7 +131,13 @@ fun Note(noteUi: NoteUi) {
 
 @Composable
 fun TagsLayout(tags: List<TagUi>) {
+    // currentX and width
+    val lastPlaceableValues = remember {
+        mutableStateOf(Pair(0, 0))
+    }
+
     SubcomposeLayout { constraints ->
+
         var currentX = 0
         var currentY= 0
 
@@ -140,14 +148,28 @@ fun TagsLayout(tags: List<TagUi>) {
         // all has one height
         val height = tagPlaceables[0].height
 
+        var visibleTags = 0
+
         layout(constraints.maxWidth, height) {
             tagPlaceables.forEach { placeable ->
 
                 if (currentX + placeable.width <= constraints.maxWidth) {
-                    placeable.placeRelative(currentX, currentY)
 
+                    placeable.placeRelative(currentX, currentY)
+                    lastPlaceableValues.value = Pair(currentX, placeable.width)
                     currentX += placeable.width + 8.dp.roundToPx()
+                    visibleTags++
+
                 } else {
+                    if (tags.size > visibleTags) {
+                        val andMore = subcompose(lastPlaceableValues) {
+                            Tag(modifier = Modifier
+                                .width((constraints.maxWidth - lastPlaceableValues.value.first).toDp()),
+                                name = "and ${visibleTags - 1} more")
+                        }.first().measure(constraints)
+
+                        andMore.placeRelative(lastPlaceableValues.value.first, currentY)
+                    }
                     return@forEach
                 }
             }
@@ -210,10 +232,11 @@ fun BottomBar() {
 
 @Composable
 fun Tag(
+    modifier: Modifier = Modifier,
     name: String
 ) {
     Text(
-        modifier = Modifier
+        modifier = modifier
             .clip(RoundedCornerShape(12.dp))
             .border(
                 width = 1.dp,
@@ -269,9 +292,9 @@ fun NotePreview() {
                 "title",
                 "content",
                 listOf(
-                    TagUi(0, "tag"),
-                    TagUi(1, "tag"),
-                    TagUi(2, "tagaaaaaaaaaffffffffffffff"),
+                    TagUi(0, "taddkdg"),
+                    TagUi(1, "taxxxg"),
+                    TagUi(2, "tagammmaappaffffffffffffff"),
                     TagUi(3, "jkkkk")
                 )
             )

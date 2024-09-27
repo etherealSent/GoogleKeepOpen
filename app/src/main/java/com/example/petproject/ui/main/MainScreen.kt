@@ -1,9 +1,9 @@
 package com.example.petproject.ui.main
 
 import android.content.res.Configuration
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -13,13 +13,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.layout.LazyLayout
-import androidx.compose.foundation.lazy.layout.LazyLayoutItemProvider
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.BottomAppBar
@@ -30,20 +30,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.layout.Placeable
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.SubcomposeLayout
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.petproject.R
 import com.example.petproject.model.NoteUi
@@ -51,26 +51,61 @@ import com.example.petproject.model.TagUi
 import com.example.petproject.ui.theme.PetProjectTheme
 
 @Composable
-fun MainScreen() {
+fun MainScreen(
+    notes: List<NoteUi>
+) {
+//
+//    val nestedScrollConnection = remember {
+//        object : NestedScrollConnection {
+//            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+//
+//            }
+//
+//
+//        }
+//    }
+
     Scaffold(
         bottomBar = { BottomBar() }
     ) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding)) {
 
-            SearchBar(modifier = Modifier.padding(horizontal = 16.dp))
+            Box(modifier = Modifier) {
 
-            NotesCategoryName(
-                name = "Pinned",modifier = Modifier.padding(horizontal = 16.dp)
-            )
+                LazyColumn(modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 8.dp)
+                ) {
+                    item {
+                        SearchBar(
+                            modifier = Modifier
+                                .padding(vertical = 12.dp)
+                        )
+                    }
+                    item {
+                        NotesCategoryName(
+                            name = "Закрепленные",modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
+                        )
+                    }
 
-            CategoryNotesBlock(listOf())
+                    categoryNotesBlock(notes.filter { it.pinned })
 
-            NotesCategoryName(
-                name = "Other",modifier = Modifier.padding(horizontal = 16.dp)
-            )
+                    item {
+                        NotesCategoryName(
+                            name = "Другие",modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
+                        )
+                    }
+                    categoryNotesBlock(notes.filter { !it.pinned })
+                }
+            }
 
-            CategoryNotesBlock(listOf())
         }
+    }
+}
+
+inline fun LazyListScope.categoryNotesBlock(noteUis: List<NoteUi>) {
+    items(noteUis) { note ->
+        Note(modifier = Modifier.padding(bottom = 8.dp),note)
     }
 }
 
@@ -78,8 +113,36 @@ fun MainScreen() {
 fun SearchBar(modifier: Modifier = Modifier) {
     Row(modifier = modifier
         .fillMaxWidth()
+        .clip(RoundedCornerShape(50))
+        .background(Color(0xFF142229)),
+    verticalAlignment = Alignment.CenterVertically
     ) {
+        IconButton(onClick = { /*TODO*/ }) {
+            Icon(tint = Color(0xFFC0CBD1),
+                imageVector = ImageVector.vectorResource(id = R.drawable.menu_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+                contentDescription = "open side-bar"
+            )
+        }
 
+        Text(text = "Искать в заметках", color = Color(0xFFC0CBD1))
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        IconButton(onClick = { /*TODO*/ }) {
+            Icon(tint = Color(0xFFC0CBD1),
+                imageVector = ImageVector.vectorResource(id = R.drawable.splitscreen_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+                contentDescription = "change note display type"
+            )
+
+        }
+
+        IconButton(onClick = { /*TODO*/ }) {
+            Icon(tint = Color(0xFFC0CBD1),
+                imageVector = ImageVector.vectorResource(id = R.drawable.account_circle_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+                contentDescription = "google profiles"
+            )
+
+        }
     }
 }
 
@@ -94,11 +157,14 @@ fun NotesCategoryName(
 }
 
 @Composable
-fun Note(noteUi: NoteUi) {
+fun Note(
+    modifier: Modifier = Modifier,
+    noteUi: NoteUi
+) {
     BoxWithConstraints {
         val parentWidth = maxWidth
         Column(
-            modifier = Modifier
+            modifier = modifier
                 .width(parentWidth)
                 .clip(RoundedCornerShape(5.dp))
                 .border(
@@ -124,7 +190,9 @@ fun Note(noteUi: NoteUi) {
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            TagsLayout(tags = noteUi.tags)
+            if (noteUi.tags.size != 0) {
+                TagsLayout(tags = noteUi.tags)
+            }
         }
     }
 }
@@ -173,20 +241,6 @@ fun TagsLayout(tags: List<TagUi>) {
                     return@forEach
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun CategoryNotesBlock(
-    noteUis: List<NoteUi>,
-) {
-    LazyColumn(modifier = Modifier
-        .fillMaxWidth()
-        .padding(horizontal = 8.dp, vertical = 8.dp)
-    ) {
-        items(noteUis) { note ->
-            Note(note)
         }
     }
 }
@@ -247,7 +301,7 @@ fun Tag(
             .padding(vertical = 4.dp, horizontal = 8.dp),
         text = name,
         color = Color(0xFFBAC0C7)
-        )
+    )
 }
 
 @Composable
@@ -296,16 +350,49 @@ fun NotePreview() {
                     TagUi(1, "taxxxg"),
                     TagUi(2, "tagammmaappaffffffffffffff"),
                     TagUi(3, "jkkkk")
-                )
+                ),
+                false
             )
         )
     }
 }
 
-@Preview
+@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun TagPreview() {
     PetProjectTheme {
         Tag(name = "hah")
+    }
+}
+
+@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+fun MainScreenPreview() {
+    PetProjectTheme {
+        MainScreen(
+            notes = listOf(
+                NoteUi(0, "a", "bc",
+                    listOf(
+                        TagUi(0, "taddkdg"),
+                        TagUi(1, "taxxxg")
+                    ), true),
+                NoteUi(1, "b", "bddc", listOf(
+                    TagUi(0, "taddkdg"),
+                    TagUi(1, "taxxxg"),
+                    TagUi(2, "ss"),
+                    TagUi(3, "a")
+                ), true),
+                NoteUi(2, "c", "bsxadcc", listOf(
+                    TagUi(0, "taddkdg"),
+                    TagUi(1, "taxxxg"),
+                    TagUi(2, "ssssss"),
+                    TagUi(3, "avdvdvdvqqqv")
+                ), false),
+                NoteUi(3, "d", "bsxac", listOf(), true),
+                NoteUi(4, "e", "bdxcxdc", listOf(), false),
+                NoteUi(5, "f", "bsxadcc", listOf(), false),
+                NoteUi(6, "f", "bsxadcc", listOf(), false)
+            )
+        )
     }
 }

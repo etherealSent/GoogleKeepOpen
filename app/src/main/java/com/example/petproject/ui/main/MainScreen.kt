@@ -7,10 +7,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -23,15 +25,19 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,61 +48,74 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.SubcomposeLayout
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.example.petproject.R
 import com.example.petproject.model.NoteUi
 import com.example.petproject.model.TagUi
 import com.example.petproject.ui.theme.PetProjectTheme
+import kotlin.math.roundToInt
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.*
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     notes: List<NoteUi>
 ) {
-//
-//    val nestedScrollConnection = remember {
-//        object : NestedScrollConnection {
-//            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-//
-//            }
-//
-//
-//        }
-//    }
+    val listState = rememberLazyListState()
+    var scrolledDp by remember { mutableStateOf(0f) }
+
+    val density = LocalDensity.current.density
+
+    LaunchedEffect(listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset) {
+        val firstVisibleItem = listState.layoutInfo.visibleItemsInfo.firstOrNull()
+        if (firstVisibleItem != null) {
+            val calculatedScrolledDp = - (listState.firstVisibleItemScrollOffset.toFloat() / density) // Convert px to dp
+            scrolledDp = calculatedScrolledDp
+        }
+    }
 
     Scaffold(
-        bottomBar = { BottomBar() }
+        bottomBar = { BottomBar() },
     ) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding)) {
-
-            Box(modifier = Modifier) {
-
-                LazyColumn(modifier = Modifier
+            LazyColumn(state = listState,
+                modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 8.dp)
-                ) {
-                    item {
-                        SearchBar(
-                            modifier = Modifier
-                                .padding(vertical = 12.dp)
-                        )
-                    }
-                    item {
-                        NotesCategoryName(
-                            name = "Закрепленные",modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
-                        )
-                    }
-
-                    categoryNotesBlock(notes.filter { it.pinned })
-
-                    item {
-                        NotesCategoryName(
-                            name = "Другие",modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
-                        )
-                    }
-                    categoryNotesBlock(notes.filter { !it.pinned })
+                    .padding(horizontal = 8.dp)
+            ) {
+                item {
+                    // MAX Y=-48.DP
+                    // MIN Y = 0
+                    SearchBar(
+                        modifier = Modifier
+                            .offset(y = scrolledDp.dp)
+                            .padding(top=12.dp)
+                    )
                 }
+                item {
+                    NotesCategoryName(
+                        name = "Закрепленные",modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp, top = 16.dp)
+                    )
+                }
+
+                categoryNotesBlock(notes.filter { it.pinned })
+
+                item {
+                    NotesCategoryName(
+                        name = "Другие",modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
+                    )
+                }
+                categoryNotesBlock(notes.filter { !it.pinned })
             }
 
         }
@@ -115,7 +134,7 @@ fun SearchBar(modifier: Modifier = Modifier) {
         .fillMaxWidth()
         .clip(RoundedCornerShape(50))
         .background(Color(0xFF142229)),
-    verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = { /*TODO*/ }) {
             Icon(tint = Color(0xFFC0CBD1),
@@ -391,7 +410,10 @@ fun MainScreenPreview() {
                 NoteUi(3, "d", "bsxac", listOf(), true),
                 NoteUi(4, "e", "bdxcxdc", listOf(), false),
                 NoteUi(5, "f", "bsxadcc", listOf(), false),
-                NoteUi(6, "f", "bsxadcc", listOf(), false)
+                NoteUi(6, "f", "bsxadcc", listOf(), false),
+                NoteUi(7, "f", "bsxadcc", listOf(), false),
+                NoteUi(8, "f", "bsxajjwjwdcc", listOf(), false)
+
             )
         )
     }

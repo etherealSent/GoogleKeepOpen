@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">PetProject</string>
+    <string name="loading_tasks_error">Error while loading tasks</string>
 </resources>

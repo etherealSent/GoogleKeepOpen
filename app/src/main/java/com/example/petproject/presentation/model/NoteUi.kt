@@ -1,8 +1,7 @@
-package com.example.petproject.model
+package com.example.petproject.presentation.model
 
 data class NoteUi(
-    val id: Int,
-    val name: String,
+    val title: String,
     val content: String,
     val tags: List<TagUi>,
     val pinned: Boolean = false

@@ -1,38 +1,33 @@
-package com.example.petproject.ui.main
+package com.example.petproject.presentation.main
 
 import android.content.res.Configuration
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,66 +36,47 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.SubcomposeLayout
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.example.petproject.R
-import com.example.petproject.model.NoteUi
-import com.example.petproject.model.TagUi
+import com.example.petproject.presentation.model.NoteUi
+import com.example.petproject.presentation.model.TagUi
 import com.example.petproject.ui.theme.PetProjectTheme
-import kotlin.math.roundToInt
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.*
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.layout.Placeable
+import androidx.compose.ui.unit.Dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
+@Composable
+fun MainScreenWrapper(
+    viewModel: MainViewModel
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    MainScreen(notes = state.notesWithTags, createNote = viewModel::createNote)
+}
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    notes: List<NoteUi>
+    notes: List<NoteUi>,
+    createNote: () -> Unit
 ) {
-    val listState = rememberLazyListState()
-    var scrolledDp by remember { mutableStateOf(0f) }
-
-    val density = LocalDensity.current.density
-
-    LaunchedEffect(listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset) {
-        val firstVisibleItem = listState.layoutInfo.visibleItemsInfo.firstOrNull()
-        if (firstVisibleItem != null) {
-            val calculatedScrolledDp = - (listState.firstVisibleItemScrollOffset.toFloat() / density) // Convert px to dp
-            scrolledDp = calculatedScrolledDp
-        }
-    }
 
     Scaffold(
-        bottomBar = { BottomBar() },
+        bottomBar = { BottomBar(createNote) },
     ) { innerPadding ->
-        Column(modifier = Modifier.padding(innerPadding)) {
-            LazyColumn(state = listState,
+        Box(modifier = Modifier.padding(innerPadding)) {
+            LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 8.dp)
             ) {
                 item {
-                    // MAX Y=-48.DP
-                    // MIN Y = 0
-                    SearchBar(
-                        modifier = Modifier
-                            .offset(y = scrolledDp.dp)
-                            .padding(top=12.dp)
-                    )
+                    Spacer(modifier = Modifier.height(18.dp))
                 }
                 item {
                     NotesCategoryName(
@@ -117,7 +93,15 @@ fun MainScreen(
                 }
                 categoryNotesBlock(notes.filter { !it.pinned })
             }
-
+            AnimatedVisibility(
+                visible = true,
+                enter = slideInVertically { fullHeight -> -fullHeight },
+                exit = slideOutVertically { fullHeight -> -fullHeight }
+            ) {
+                SearchBar(modifier = Modifier
+                    .background(Color.Transparent.copy(0.1f))
+                    .padding(start = 20.dp, end = 20.dp, top = 12.dp))
+            }
         }
     }
 }
@@ -133,7 +117,8 @@ fun SearchBar(modifier: Modifier = Modifier) {
     Row(modifier = modifier
         .fillMaxWidth()
         .clip(RoundedCornerShape(50))
-        .background(Color(0xFF142229)),
+        .background(Color(0xFF142229))
+        .padding(vertical = 1.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = { /*TODO*/ }) {
@@ -194,7 +179,7 @@ fun Note(
                 .padding(vertical = 8.dp, horizontal = 8.dp)
         ) {
             Text(
-                text = noteUi.name,
+                text = noteUi.title,
                 style = MaterialTheme.typography.titleMedium,
                 color = Color(0xFFDBE1E5)
             )
@@ -210,66 +195,89 @@ fun Note(
             Spacer(modifier = Modifier.height(10.dp))
 
             if (noteUi.tags.size != 0) {
-                TagsLayout(tags = noteUi.tags)
+                // TODO: add tags
+                TagsLayout(tags = noteUi.tags, parentWidth + 32.dp)
             }
         }
     }
 }
 
 @Composable
-fun TagsLayout(tags: List<TagUi>) {
+fun TagsLayout(tags: List<TagUi>, parentWidth: Dp) {
     // currentX and width
     val lastPlaceableValues = remember {
         mutableStateOf(Pair(0, 0))
     }
+    var visibleTags by remember {
+        mutableStateOf(0)
+    }
+
+    var visibleWidth by remember {
+        mutableStateOf(mutableListOf(0))
+    }
+
 
     SubcomposeLayout { constraints ->
 
         var currentX = 0
         var currentY= 0
 
-        val tagPlaceables = tags.map { tag ->
-            subcompose(tag) { Tag(name = tag.name) }.first().measure(constraints)
+        val tagsMeasurement = tags.map { tag ->
+                subcompose(tag) { Tag(name = tag.name) }.first().measure(constraints)
         }
 
-        // all has one height
-        val height = tagPlaceables[0].height
+        // todo measure andMore tag
 
-        var visibleTags = 0
+        val height = tagsMeasurement[0].height
+
+        val tagsWidth = tagsMeasurement.map { it.width + 16.dp.roundToPx() }
+
+        for (tagWidth in tagsWidth) {
+            if (visibleWidth.sum() + tagWidth < parentWidth.roundToPx()) {
+                visibleTags++
+                visibleWidth.add(tagWidth)
+            } else {
+                break
+            }
+        }
+
+        var notVisibleTagsCount = tags.size - visibleTags
+
+        var andMoreTagMeasurement: Placeable? = null
+        
+        if (notVisibleTagsCount > 0) {
+            andMoreTagMeasurement = subcompose(0) { Tag(name = "and ${notVisibleTagsCount} more") }.first().measure(constraints)
+            val totalAMTMeasurement = andMoreTagMeasurement.width + 16.dp.roundToPx()
+            
+        }
+
+
+        val tagPlaceables = tagsMeasurement.take(visibleTags)
 
         layout(constraints.maxWidth, height) {
-            tagPlaceables.forEach { placeable ->
 
-                if (currentX + placeable.width <= constraints.maxWidth) {
+            tagPlaceables.forEachIndexed { index, placeable ->
 
-                    placeable.placeRelative(currentX, currentY)
-                    lastPlaceableValues.value = Pair(currentX, placeable.width)
-                    currentX += placeable.width + 8.dp.roundToPx()
-                    visibleTags++
+                placeable.placeRelative(currentX, currentY)
+                lastPlaceableValues.value = Pair(currentX, placeable.width)
+                currentX += placeable.width + 8.dp.roundToPx()
+            }
 
-                } else {
-                    if (tags.size > visibleTags) {
-                        val andMore = subcompose(lastPlaceableValues) {
-                            Tag(modifier = Modifier
-                                .width((constraints.maxWidth - lastPlaceableValues.value.first).toDp()),
-                                name = "and ${visibleTags - 1} more")
-                        }.first().measure(constraints)
-
-                        andMore.placeRelative(lastPlaceableValues.value.first, currentY)
-                    }
-                    return@forEach
-                }
+            if (andMoreTagMeasurement != null) {
+                andMoreTagMeasurement.placeRelative(currentX, currentY)
             }
         }
     }
+    Text(text = "$visibleTags, ${visibleWidth},${parentWidth}")
 }
 
+
 @Composable
-fun BottomBar() {
+fun BottomBar(createNote: () -> Unit) {
     BottomAppBar(
-        floatingActionButton = { FAB() },
+        floatingActionButton = { FAB(createNote) },
         actions = {
-            IconButton(onClick = { /*TODO*/ }) {
+            IconButton(onClick = {}) {
                 Icon(
                     imageVector = ImageVector.vectorResource(
                         id = R.drawable.check_box_24dp_e8eaed_fill0_wght400_grad0_opsz24
@@ -324,8 +332,10 @@ fun Tag(
 }
 
 @Composable
-fun FAB() {
-    FloatingActionButton(onClick = { /*TODO*/ }) {
+fun FAB(
+    createNote: () -> Unit
+) {
+    FloatingActionButton(onClick = createNote) {
         Icon(imageVector = Icons.Default.Add, contentDescription = "create note")
     }
 }
@@ -343,7 +353,7 @@ fun SearchBarPreview() {
 @Composable
 fun BottomBarPreview() {
     PetProjectTheme {
-        BottomBar()
+        BottomBar({})
     }
 }
 
@@ -351,7 +361,7 @@ fun BottomBarPreview() {
 @Composable
 fun FABPreview() {
     PetProjectTheme {
-        FAB()
+        FAB({})
     }
 }
 
@@ -361,14 +371,14 @@ fun NotePreview() {
     PetProjectTheme {
         Note(
             noteUi = NoteUi(
-                0,
                 "title",
                 "content",
                 listOf(
-                    TagUi(0, "taddkdg"),
-                    TagUi(1, "taxxxg"),
-                    TagUi(2, "tagammmaappaffffffffffffff"),
-                    TagUi(3, "jkkkk")
+                    TagUi("taddk,d"),
+                    TagUi("taxxxg"),
+                    TagUi("tagmoment"),
+                    TagUi("bbb"),
+                    TagUi("aab")
                 ),
                 false
             )
@@ -390,31 +400,34 @@ fun MainScreenPreview() {
     PetProjectTheme {
         MainScreen(
             notes = listOf(
-                NoteUi(0, "a", "bc",
+                NoteUi( "a", "bc",
                     listOf(
-                        TagUi(0, "taddkdg"),
-                        TagUi(1, "taxxxg")
+                        TagUi("taddk,d"),
+                        TagUi( "taxxxg"),
+                        TagUi( "tagmoment"),
+                        TagUi( "bbb"),
+                        TagUi( "aab")
                     ), true),
-                NoteUi(1, "b", "bddc", listOf(
-                    TagUi(0, "taddkdg"),
-                    TagUi(1, "taxxxg"),
-                    TagUi(2, "ss"),
-                    TagUi(3, "a")
+                NoteUi("b", "bddc", listOf(
+                    TagUi( "taddkdg"),
+                    TagUi( "taxxxg"),
+                    TagUi( "ss"),
+                    TagUi( "a")
                 ), true),
-                NoteUi(2, "c", "bsxadcc", listOf(
-                    TagUi(0, "taddkdg"),
-                    TagUi(1, "taxxxg"),
-                    TagUi(2, "ssssss"),
-                    TagUi(3, "avdvdvdvqqqv")
+                NoteUi( "c", "bsxadcc", listOf(
+                    TagUi( "taddkdg"),
+                    TagUi( "taxxxg"),
+                    TagUi( "ssssss"),
+                    TagUi( "avdvdvdvqqqv")
                 ), false),
-                NoteUi(3, "d", "bsxac", listOf(), true),
-                NoteUi(4, "e", "bdxcxdc", listOf(), false),
-                NoteUi(5, "f", "bsxadcc", listOf(), false),
-                NoteUi(6, "f", "bsxadcc", listOf(), false),
-                NoteUi(7, "f", "bsxadcc", listOf(), false),
-                NoteUi(8, "f", "bsxajjwjwdcc", listOf(), false)
+                NoteUi("d", "bsxac", listOf(), true),
+                NoteUi( "e", "bdxcxdc", listOf(), false),
+                NoteUi( "f", "bsxadcc", listOf(), false),
+                NoteUi( "f", "bsxadcc", listOf(), false),
+                NoteUi( "f", "bsxadcc", listOf(), false),
+                NoteUi( "f", "bsxajjwjwdcc", listOf(), false)
 
-            )
+            ), createNote = {}
         )
     }
 }

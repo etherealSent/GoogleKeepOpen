@@ -67,6 +67,7 @@ android {
 
 dependencies {
 
+    implementation(libs.androidx.navigation.compose)
     implementation(libs.ksp.symbol.processing)
 
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
@@ -77,8 +78,9 @@ dependencies {
     ksp(libs.room.compiler)
     implementation(libs.room.ktx)
 
-    implementation(libs.hilt.android)
-    ksp(libs.hilt.compiler)
+    implementation(libs.hilt.android.core)
+    implementation(libs.androidx.hilt.navigation.compose)
+    kapt(libs.hilt.compiler)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

@@ -49,21 +49,23 @@ import com.example.petproject.ui.theme.PetProjectTheme
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
 fun MainScreenWrapper(
-    viewModel: MainViewModel
+    viewModel: MainViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-
-    MainScreen(notes = state.notesWithTags, createNote = viewModel::createNote)
+    
+    MainNavigationDrawer(notes = state.notesWithTags, createNote = viewModel::createNote, tags = emptyList())
 }
 
 
 @Composable
 fun MainScreen(
     notes: List<NoteUi>,
-    createNote: () -> Unit
+    createNote: () -> Unit,
+    onNavigationIconClicked: () -> Unit
 ) {
 
     Scaffold(
@@ -100,7 +102,9 @@ fun MainScreen(
             ) {
                 SearchBar(modifier = Modifier
                     .background(Color.Transparent.copy(0.1f))
-                    .padding(start = 20.dp, end = 20.dp, top = 12.dp))
+                    .padding(start = 20.dp, end = 20.dp, top = 12.dp),
+                    onNavigationIconClicked = onNavigationIconClicked
+                )
             }
         }
     }
@@ -113,7 +117,10 @@ inline fun LazyListScope.categoryNotesBlock(noteUis: List<NoteUi>) {
 }
 
 @Composable
-fun SearchBar(modifier: Modifier = Modifier) {
+fun SearchBar(
+    modifier: Modifier = Modifier,
+    onNavigationIconClicked: () -> Unit
+) {
     Row(modifier = modifier
         .fillMaxWidth()
         .clip(RoundedCornerShape(50))
@@ -121,7 +128,7 @@ fun SearchBar(modifier: Modifier = Modifier) {
         .padding(vertical = 1.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(onClick = { /*TODO*/ }) {
+        IconButton(onClick = onNavigationIconClicked) {
             Icon(tint = Color(0xFFC0CBD1),
                 imageVector = ImageVector.vectorResource(id = R.drawable.menu_24dp_e8eaed_fill0_wght400_grad0_opsz24),
                 contentDescription = "open side-bar"
@@ -344,7 +351,7 @@ fun FAB(
 @Composable
 fun SearchBarPreview() {
     PetProjectTheme {
-        SearchBar()
+        SearchBar(onNavigationIconClicked = {})
     }
 }
 
@@ -427,7 +434,7 @@ fun MainScreenPreview() {
                 NoteUi( "f", "bsxadcc", listOf(), false),
                 NoteUi( "f", "bsxajjwjwdcc", listOf(), false)
 
-            ), createNote = {}
+            ), createNote = {}, onNavigationIconClicked = {}
         )
     }
 }

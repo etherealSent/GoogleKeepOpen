@@ -31,12 +31,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val mainViewModel by viewModels<MainViewModel>()
-
         enableEdgeToEdge()
         setContent {
             PetProjectTheme {
-                MainScreenWrapper(viewModel = mainViewModel)
+                PetNavGraph()
             }
         }
 

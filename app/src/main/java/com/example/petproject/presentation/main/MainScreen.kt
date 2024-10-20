@@ -82,7 +82,7 @@ fun MainScreen(
                 }
                 item {
                     NotesCategoryName(
-                        name = "Закрепленные",modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp, top = 16.dp)
+                        name = "Закрепленные",modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp, top = 52.dp)
                     )
                 }
 

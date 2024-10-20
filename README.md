@@ -18,3 +18,4 @@ ____
 | NoteDb | Made | Room | 15.10.2024 |
 | DI Database | Made | Hilt/Dagger | 16.10.2024 |
 | TagDb | Made | Room | 17.10.2024 |
+| NavGraph | Made | Navigation Compose | 19.10.2024 |

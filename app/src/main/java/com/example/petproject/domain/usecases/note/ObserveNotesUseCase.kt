@@ -1,4 +1,4 @@
-package com.example.petproject.domain.usecases
+package com.example.petproject.domain.usecases.note
 
 import com.example.petproject.domain.entities.note.Note
 import com.example.petproject.domain.repository.note.NoteRepository

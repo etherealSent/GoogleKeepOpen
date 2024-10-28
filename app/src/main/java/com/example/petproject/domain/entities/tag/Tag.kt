@@ -1,5 +1,6 @@
 package com.example.petproject.domain.entities.tag
 
 data class Tag(
-    val name: String
+    val id: String = "",
+    val name: String = ""
 )

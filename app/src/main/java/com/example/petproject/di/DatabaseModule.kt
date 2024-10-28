@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room.databaseBuilder
 import com.example.petproject.data.storage.AppDatabase
 import com.example.petproject.data.storage.AppDatabase.Companion.DATABASE_NAME
+import com.example.petproject.data.storage.converters.DataConverters
 import com.example.petproject.data.storage.dao.NoteDao
 import com.example.petproject.data.storage.dao.TagDao
 import dagger.Module
@@ -26,6 +27,7 @@ object DatabaseModule {
         )
             .allowMainThreadQueries()
             .fallbackToDestructiveMigration()
+            .addTypeConverter(DataConverters())
             .build()
 
     @Provides

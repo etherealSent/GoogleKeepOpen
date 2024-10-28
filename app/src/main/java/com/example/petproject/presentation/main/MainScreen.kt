@@ -6,6 +6,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -22,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.DrawerState
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -53,23 +55,36 @@ import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
 fun MainScreenWrapper(
+    drawerState: DrawerState,
+    onAddNote: () -> Unit,
+    onNoteClick: (NoteUi) -> Unit,
+    onEditTags : () -> Unit,
     viewModel: MainViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    
-    MainNavigationDrawer(notes = state.notesWithTags, createNote = viewModel::createNote, tags = emptyList())
+
+    MainNavigationDrawer(
+        notes = state.notesWithTags,
+        tags = emptyList(),
+        onNoteClick = onNoteClick,
+        onAddNote = onAddNote,
+        drawerState = drawerState,
+        onEditTags = onEditTags
+
+    )
 }
 
 
 @Composable
 fun MainScreen(
     notes: List<NoteUi>,
-    createNote: () -> Unit,
-    onNavigationIconClicked: () -> Unit
+    onNavigationIconClicked: () -> Unit,
+    onAddNote: () -> Unit,
+    onNoteClick: (NoteUi) -> Unit
 ) {
 
     Scaffold(
-        bottomBar = { BottomBar(createNote) },
+        bottomBar = { BottomBar(onAddNote) },
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
             LazyColumn(
@@ -86,14 +101,20 @@ fun MainScreen(
                     )
                 }
 
-                categoryNotesBlock(notes.filter { it.pinned })
+                categoryNotesBlock(
+                    notes.filter { it.pinned },
+                    onNoteClick = onNoteClick
+                )
 
                 item {
                     NotesCategoryName(
                         name = "Другие",modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
                     )
                 }
-                categoryNotesBlock(notes.filter { !it.pinned })
+                categoryNotesBlock(
+                    notes.filter { !it.pinned },
+                    onNoteClick = onNoteClick
+                )
             }
             AnimatedVisibility(
                 visible = true,
@@ -110,9 +131,9 @@ fun MainScreen(
     }
 }
 
-inline fun LazyListScope.categoryNotesBlock(noteUis: List<NoteUi>) {
+inline fun LazyListScope.categoryNotesBlock(noteUis: List<NoteUi>, crossinline onNoteClick: (NoteUi) -> Unit) {
     items(noteUis) { note ->
-        Note(modifier = Modifier.padding(bottom = 8.dp),note)
+        Note(modifier = Modifier.padding(bottom = 8.dp).clickable { onNoteClick(note) },note)
     }
 }
 
@@ -280,9 +301,9 @@ fun TagsLayout(tags: List<TagUi>, parentWidth: Dp) {
 
 
 @Composable
-fun BottomBar(createNote: () -> Unit) {
+fun BottomBar(onFabClick: () -> Unit) {
     BottomAppBar(
-        floatingActionButton = { FAB(createNote) },
+        floatingActionButton = { FAB(onFabClick) },
         actions = {
             IconButton(onClick = {}) {
                 Icon(
@@ -340,9 +361,9 @@ fun Tag(
 
 @Composable
 fun FAB(
-    createNote: () -> Unit
+    onClick: () -> Unit
 ) {
-    FloatingActionButton(onClick = createNote) {
+    FloatingActionButton(onClick = onClick) {
         Icon(imageVector = Icons.Default.Add, contentDescription = "create note")
     }
 }
@@ -378,16 +399,16 @@ fun NotePreview() {
     PetProjectTheme {
         Note(
             noteUi = NoteUi(
-                "title",
-                "content",
-                listOf(
-                    TagUi("taddk,d"),
-                    TagUi("taxxxg"),
-                    TagUi("tagmoment"),
-                    TagUi("bbb"),
-                    TagUi("aab")
+                title = "title",
+                content = "content",
+                tags = listOf(
+                    TagUi(name = "taddk,d"),
+                    TagUi(name ="taxxxg"),
+                    TagUi(name ="tagmoment"),
+                    TagUi(name ="bbb"),
+                    TagUi(name ="aab")
                 ),
-                false
+                pinned = false
             )
         )
     }
@@ -407,34 +428,38 @@ fun MainScreenPreview() {
     PetProjectTheme {
         MainScreen(
             notes = listOf(
-                NoteUi( "a", "bc",
-                    listOf(
-                        TagUi("taddk,d"),
-                        TagUi( "taxxxg"),
-                        TagUi( "tagmoment"),
-                        TagUi( "bbb"),
-                        TagUi( "aab")
-                    ), true),
-                NoteUi("b", "bddc", listOf(
-                    TagUi( "taddkdg"),
-                    TagUi( "taxxxg"),
-                    TagUi( "ss"),
-                    TagUi( "a")
-                ), true),
-                NoteUi( "c", "bsxadcc", listOf(
-                    TagUi( "taddkdg"),
-                    TagUi( "taxxxg"),
-                    TagUi( "ssssss"),
-                    TagUi( "avdvdvdvqqqv")
-                ), false),
-                NoteUi("d", "bsxac", listOf(), true),
-                NoteUi( "e", "bdxcxdc", listOf(), false),
-                NoteUi( "f", "bsxadcc", listOf(), false),
-                NoteUi( "f", "bsxadcc", listOf(), false),
-                NoteUi( "f", "bsxadcc", listOf(), false),
-                NoteUi( "f", "bsxajjwjwdcc", listOf(), false)
+                NoteUi( title = "a", content = "bc",
+                    tags = listOf(
+                        TagUi(name = "taddk,d"),
+                        TagUi( name = "taxxxg"),
+                        TagUi( name = "tagmoment"),
+                        TagUi( name = "bbb"),
+                        TagUi( name="aab")
+                    ), pinned = true),
+                NoteUi( title = "a", content = "bc",
+                    tags = listOf(
+                        TagUi(name = "taddk,d"),
+                        TagUi( name = "taxxxg"),
+                        TagUi( name = "tagmoment"),
+                        TagUi( name = "bbb"),
+                        TagUi( name="aab")
+                    ), pinned = true),
+                NoteUi( title = "a", content = "bc",
+                    tags = listOf(
+                        TagUi(name = "taddk,d"),
+                        TagUi( name = "taxxxg"),
+                        TagUi( name = "tagmoment"),
+                        TagUi( name = "bbb"),
+                        TagUi( name="aab")
+                    ), pinned = true),
+                NoteUi(title = "d", content = "bsxac", tags = listOf(), pinned = true),
+                NoteUi(title = "d", content = "bsxac", tags = listOf(), pinned = true),
+                NoteUi(title = "d", content = "bsxac", tags = listOf(), pinned = true),
+                NoteUi(title = "d", content = "bsxac", tags = listOf(), pinned = true),
+                NoteUi(title = "d", content = "bsxac", tags = listOf(), pinned = true),
 
-            ), createNote = {}, onNavigationIconClicked = {}
+
+            ), onNavigationIconClicked = {}, onAddNote = {}, onNoteClick = {}
         )
     }
 }

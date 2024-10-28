@@ -7,9 +7,11 @@ import javax.inject.Inject
 class NoteToDbMapper @Inject constructor() : (Note) -> NoteDb {
     override fun invoke(note: Note): NoteDb {
         return NoteDb(
+            noteId = note.id,
             title = note.title,
             content = note.content,
-            pinned = note.pinned
+            pinned = note.pinned,
+            lastUpdate = note.lastUpdate
         )
     }
 }

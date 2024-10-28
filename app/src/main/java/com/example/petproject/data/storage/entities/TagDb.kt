@@ -7,7 +7,7 @@ import com.example.petproject.data.storage.entities.TagDb.Companion.TAG_TABLE_NA
 
 @Entity(tableName = TAG_TABLE_NAME)
 data class TagDb(
-    @PrimaryKey(autoGenerate = true) val tagId: Int = 0,
+    @PrimaryKey val tagId: String = "",
     @ColumnInfo(name = "name") val name: String
 ) {
     companion object {

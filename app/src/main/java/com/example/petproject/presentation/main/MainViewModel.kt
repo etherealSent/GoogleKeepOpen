@@ -3,12 +3,9 @@ package com.example.petproject.presentation.main
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.petproject.R
-import com.example.petproject.data.storage.entities.NoteDb
 import com.example.petproject.domain.entities.note.Note
-import com.example.petproject.domain.entities.note.NoteWithTags
-import com.example.petproject.domain.repository.note.NoteRepository
-import com.example.petproject.domain.usecases.ObserveNotesUseCase
-import com.example.petproject.domain.usecases.SaveNoteUseCase
+import com.example.petproject.domain.usecases.note.ObserveNotesUseCase
+import com.example.petproject.domain.usecases.note.SaveNoteUseCase
 import com.example.petproject.presentation.mappers.NoteToDomainMapper
 import com.example.petproject.presentation.mappers.NoteToUiMapper
 import com.example.petproject.presentation.model.NoteUi
@@ -17,7 +14,6 @@ import com.example.petproject.utils.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
@@ -57,7 +53,7 @@ class MainViewModel @Inject constructor(
 
     fun createNote() {
         viewModelScope.launch {
-            saveNoteUseCase.saveNote(noteToDomainMapper(NoteUi("aa", "bb", listOf(), false)))
+            saveNoteUseCase.saveNote(noteToDomainMapper(NoteUi("", "aa", "bb", listOf(), false)))
         }
     }
 }

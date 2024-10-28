@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -50,8 +51,11 @@ data class NavigationItems(
 @Composable
 fun MainNavigationDrawer(
     notes: List<NoteUi>,
-    createNote: () -> Unit,
-    tags: List<TagUi>
+    onAddNote: () -> Unit,
+    onEditTags : () -> Unit,
+    onNoteClick: (NoteUi) -> Unit,
+    tags: List<TagUi>,
+    drawerState: DrawerState
 ) {
     val upItems = listOf(
         NavigationItems(
@@ -92,8 +96,6 @@ fun MainNavigationDrawer(
     var selectedItemIndex by rememberSaveable {
         mutableStateOf(0)
     }
-
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Open)
     val scope = rememberCoroutineScope()
 
     ModalNavigationDrawer(
@@ -145,7 +147,7 @@ fun MainNavigationDrawer(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         NavigationDrawerTextButton(text = "Ярлыки", onClick = {})
-                        NavigationDrawerTextButton(text = "Изменить", onClick = {})
+                        NavigationDrawerTextButton(text = "Изменить", onClick = onEditTags)
                     }
 
                     tags.forEachIndexed { index, tag ->
@@ -201,7 +203,8 @@ fun MainNavigationDrawer(
     ) {
         MainScreen(
             notes = notes,
-            createNote = createNote,
+            onAddNote = onAddNote,
+            onNoteClick = onNoteClick,
             onNavigationIconClicked = {
                 scope.launch {
                     drawerState.apply {
@@ -234,11 +237,14 @@ fun MainNavigationDrawerPreview() {
     PetProjectTheme {
         MainNavigationDrawer(
             notes = emptyList(),
-            createNote = {},
+            onAddNote = {},
+            onNoteClick = {},
             tags = listOf(
-                TagUi("ha"),
-                TagUi("wa")
-            )
+                TagUi(name = "ha"),
+                TagUi(name = "wa")
+            ),
+            drawerState = rememberDrawerState(initialValue = DrawerValue.Closed),
+            onEditTags = {}
         )
     }
 }

@@ -1,9 +1,8 @@
-package com.example.petproject.domain.usecases
+package com.example.petproject.domain.usecases.note
 
 import com.example.petproject.domain.entities.note.Note
 import com.example.petproject.domain.mappers.NoteToDbMapper
 import com.example.petproject.domain.repository.note.NoteRepository
-import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 interface SaveNoteUseCase {

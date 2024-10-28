@@ -8,6 +8,9 @@ import javax.inject.Inject
 
 class TagDbToDomainMapper @Inject constructor() : (TagDb) -> Tag {
     override fun invoke(tagDb: TagDb): Tag {
-        return Tag(tagDb.name)
+        return Tag(
+            id = tagDb.tagId,
+            name = tagDb.name
+        )
     }
 }

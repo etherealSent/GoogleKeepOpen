@@ -45,17 +45,17 @@ fun EditTagsScreenWrapper(
     onBack: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val newTagName by viewModel.newTagName.collectAsStateWithLifecycle()
 
     EditTagsScreen(
         tags = state.tags,
         editing = state.editingId.isNotEmpty(),
         onEditTagClicked = viewModel::onTagEdit,
         onBack = onBack,
-        newTagName = newTagName,
+        newTagName = state.newTagName,
         onNewTagNameChanged = viewModel::onNewTagNameChanged,
         onAddClicked = viewModel::createTag,
-        onCloseClicked = viewModel::clearNewTag
+        onCloseClicked = viewModel::clearNewTag,
+        onTagChanged = viewModel::onTagChanged
     )
 }
 
@@ -68,13 +68,15 @@ fun EditTagsScreen(
     newTagName: String,
     onNewTagNameChanged: (String) -> Unit,
     onAddClicked: () -> Unit,
-    onCloseClicked: () -> Unit
+    onCloseClicked: () -> Unit,
+    onTagChanged: (TagUi, String) -> Unit
 ) {
     Scaffold(
         topBar = {
             EditTagsTopBar(onBack)
         }
     ) { innerPadding ->
+
         Column(modifier = Modifier.padding(innerPadding)) {
             LazyColumn {
                 item {
@@ -87,14 +89,16 @@ fun EditTagsScreen(
                         tagName = newTagName
                     )
                 }
-                items(tags) {
+                items(tags, key = { it.id }) { tag ->
                     TagOption(
-                        tagUi = it,
-                        onTagChange = {},
+                        tagUi = tag,
+                        onTagChange = {
+                            onTagChanged(tag, it)
+                        },
                         onDeleteClicked = {},
                         onCompleteClicked = {},
                         editing = editing,
-                        onEditTagClicked = { onEditTagClicked(it.id) }
+                        onEditTagClicked = { onEditTagClicked(tag.id) }
                     )
                 }
             }
@@ -215,19 +219,22 @@ fun EditTagsTopBar(
     )
 }
 
-@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
-@Composable
-fun EditTagsScreenPreview() {
-    EditTagsScreen(tags = listOf(
-        TagUi("", "ab"),
-        TagUi("", "ab")
-    ),
-        editing = false,
-        onEditTagClicked = {},
-        onBack = {},
-        newTagName = "",
-        onNewTagNameChanged = {},
-        onAddClicked = {},
-        onCloseClicked = {}
-    )
-}
+//@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
+//@Composable
+//fun EditTagsScreenPreview() {
+//    EditTagsScreen(tags = listOf(
+//        TagUi("", "ab"),
+//        TagUi("", "ab")
+//    ),
+//        editing = false,
+//        onEditTagClicked = {},
+//        onBack = {},
+//        newTagName = "",
+//        onNewTagNameChanged = {},
+//        onAddClicked = {},
+//        onCloseClicked = {},
+//        onTagChanged ={
+//
+//        },
+//    )
+//}

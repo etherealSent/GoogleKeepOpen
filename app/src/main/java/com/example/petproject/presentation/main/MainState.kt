@@ -4,5 +4,6 @@ import com.example.petproject.presentation.model.NoteUi
 
 data class MainState(
     val notesWithTags: List<NoteUi> = emptyList(),
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val screenType: MainScreenType = MainScreenType.Notes
 )

@@ -12,7 +12,9 @@ class NoteToUiMapper @Inject constructor() : (Note) -> NoteUi {
                 content = note.content,
                 pinned = note.pinned,
                 tags = listOf(),
-                lastUpdate = note.lastUpdate
+                lastUpdate = note.lastUpdate,
+                photoPaths = note.photoPaths,
+                isArchived = note.isArchived
         )
     }
 }

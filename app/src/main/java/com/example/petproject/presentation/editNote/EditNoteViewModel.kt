@@ -1,6 +1,10 @@
 package com.example.petproject.presentation.editNote
 
+import android.content.Intent
+import android.net.Uri
 import android.util.Log
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -10,6 +14,8 @@ import com.example.petproject.domain.usecases.note.SaveNoteUseCase
 import com.example.petproject.domain.usecases.note.UpdateNoteUseCase
 import com.example.petproject.presentation.mappers.NoteToDomainMapper
 import com.example.petproject.presentation.model.NoteUi
+import com.example.petproject.utils.files.FileInfo
+import com.example.petproject.utils.files.ProviderFileManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,6 +34,13 @@ class EditNoteViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
+    override fun onCleared() {
+        super.onCleared()
+        if (noteId != null) {
+            loadNote(noteId)
+        }
+    }
+
     private val noteId: String? = savedStateHandle.get<String>("noteId")
 
     private val _uiState = MutableStateFlow(EditNoteState())
@@ -40,7 +53,9 @@ class EditNoteViewModel @Inject constructor(
         Log.d("NoteDetailsViewModel", "NoteID: $noteId")
     }
 
-    fun saveNote() {
+    private lateinit var initState: EditNoteState
+
+    fun saveNote(date: Date) {
         if (_uiState.value.title.isEmpty() && _uiState.value.content.isEmpty()) {
             _uiState.update {
                 it.copy(
@@ -51,9 +66,13 @@ class EditNoteViewModel @Inject constructor(
         }
 
         if (noteId == null) {
+            updateLastUpdateTime(date)
             createNewNote()
         } else {
-            updateNote()
+            if (initState != _uiState.value) {
+                updateLastUpdateTime(date)
+                updateNote()
+            }
         }
     }
 
@@ -62,7 +81,7 @@ class EditNoteViewModel @Inject constructor(
             saveNoteUseCase.saveNote(
                 noteToDomainMapper(
                     _uiState.value.run {
-                        NoteUi(id = "", title, content, listOf(), pinned, lastUpdate)
+                        NoteUi(id = "", title, content, listOf(), pinned, lastUpdate, photoPaths)
                     }
                 )
             )
@@ -78,6 +97,18 @@ class EditNoteViewModel @Inject constructor(
     fun updateContent(content: String) {
         _uiState.update {
             it.copy(content = content)
+        }
+    }
+
+    fun addNewPhotoPath(uri: String) {
+        Log.d("NoteDetailsViewModel", "INITIAL: ${uiState.value.photoPaths}")
+        val photoPaths = uiState.value.photoPaths.toMutableList()
+        photoPaths.add(uri)
+
+        _uiState.update {
+            it.copy(
+                photoPaths = photoPaths.toList()
+            )
         }
     }
 
@@ -97,22 +128,24 @@ class EditNoteViewModel @Inject constructor(
         if (noteId == null) {
             throw RuntimeException("updateNote() was called but note is new.")
         }
-        viewModelScope.launch {
-            updateNoteUseCase.updateNote(
-                uiState.value.run {
-                    Note(
-                        id = noteId,
-                        title = title,
-                        content = content,
-                        pinned = pinned,
-                        lastUpdate = lastUpdate
-                    )
-                }
-            )
-        }
+            viewModelScope.launch {
+                updateNoteUseCase.updateNote(
+                    uiState.value.run {
+                        Note(
+                            id = noteId,
+                            title = title,
+                            content = content,
+                            pinned = pinned,
+                            lastUpdate = lastUpdate,
+                            photoPaths = photoPaths
+                        )
+                    }
+                )
+            }
+            Log.d("NoteDetailsViewModel", "PhotoPaths: ${uiState.value.photoPaths.size}")
     }
 
-    fun updateLastUpdateTime(date: Date) {
+    private fun updateLastUpdateTime(date: Date) {
         _uiState.update {
             it.copy(
                 lastUpdate = date
@@ -120,18 +153,18 @@ class EditNoteViewModel @Inject constructor(
         }
     }
 
-    fun formatLastUpdateTime(currentTime: Date) {
-
-        val timeDifference = Date(currentTime.time - uiState.value.lastUpdate.time)
-        val formatter = SimpleDateFormat("HH:mm:ss")
-        val formattedTime = formatter.format(timeDifference)
-
-        _uiState.update {
-            it.copy(
-                formattedDate = formattedTime
-            )
-        }
-    }
+//    fun formatLastUpdateTime(currentTime: Date) {
+//
+//        val timeDifference = Date(currentTime.time - uiState.value.lastUpdate.time)
+//        val formatter = SimpleDateFormat("HH:mm:ss")
+//        val formattedTime = formatter.format(timeDifference)
+//
+//        _uiState.update {
+//            it.copy(
+//                formattedDate = formattedTime
+//            )
+//        }
+//    }
 
     private fun loadNote(noteId: String) {
         _uiState.update {
@@ -147,9 +180,19 @@ class EditNoteViewModel @Inject constructor(
                             content = note.content,
                             pinned = note.pinned,
                             isLoading = false,
-                            lastUpdate = note.lastUpdate
+                            lastUpdate = note.lastUpdate,
+                            photoPaths = note.photoPaths
                         )
                     }
+                    initState = EditNoteState(
+                        noteId = note.id,
+                        title = note.title,
+                        content = note.content,
+                        pinned = note.pinned,
+                        isLoading = false,
+                        lastUpdate = note.lastUpdate,
+                        photoPaths = note.photoPaths
+                    )
                 } else {
                     _uiState.update {
                         it.copy(
@@ -160,6 +203,4 @@ class EditNoteViewModel @Inject constructor(
             }
         }
     }
-
-
 }

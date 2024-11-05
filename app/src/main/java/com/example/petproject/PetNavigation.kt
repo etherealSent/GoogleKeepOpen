@@ -2,6 +2,7 @@ package com.example.petproject
 
 import androidx.navigation.NavHostController
 import com.example.petproject.PetDestinationsArgs.NOTE_ID_ARG
+import com.example.petproject.PetScreens.EDIT_NOTE_CAMERA_SCREEN
 import com.example.petproject.PetScreens.EDIT_NOTE_SCREEN
 import com.example.petproject.PetScreens.EDIT_TAGS_SCREEN
 import com.example.petproject.PetScreens.MAIN_SCREEN
@@ -10,12 +11,15 @@ private object PetScreens {
     const val MAIN_SCREEN = "main"
     const val EDIT_NOTE_SCREEN = "edit_note"
     const val EDIT_TAGS_SCREEN = "edit_tags"
+    const val EDIT_NOTE_CAMERA_SCREEN = "edit_note_camera"
+
 }
 
 object PetDestinations {
     const val MAIN_ROUTE = MAIN_SCREEN
     const val EDIT_NOTE_ROUTE = EDIT_NOTE_SCREEN
     const val EDIT_TAGS_ROUTE = EDIT_TAGS_SCREEN
+    const val EDIT_NOTE_CAMERA_ROUTE = EDIT_NOTE_CAMERA_SCREEN
 
 }
 
@@ -37,6 +41,12 @@ class PetNavigationActions(private val navController: NavHostController) {
     fun navigateToEditTags() {
         navController.navigate(
             EDIT_TAGS_SCREEN
+        )
+    }
+
+    fun navigateToEditNoteCamera(noteId: String?) {
+        navController.navigate(
+            "note_details_camera/${noteId}"
         )
     }
 }

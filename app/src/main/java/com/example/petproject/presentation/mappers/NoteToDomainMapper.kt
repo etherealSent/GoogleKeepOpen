@@ -10,7 +10,10 @@ class NoteToDomainMapper @Inject constructor() : (NoteUi) -> Note {
             id = note.id,
             title = note.title,
             content = note.content,
-            pinned = note.pinned
+            pinned = note.pinned,
+            lastUpdate = note.lastUpdate,
+            photoPaths = note.photoPaths,
+            isArchived = note.isArchived
         )
     }
 }

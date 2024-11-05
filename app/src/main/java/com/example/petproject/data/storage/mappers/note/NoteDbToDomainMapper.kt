@@ -11,7 +11,9 @@ class NoteDbToDomainMapper @Inject constructor() : (NoteDb) -> Note {
             title = noteDb.title,
             content = noteDb.content,
             pinned = noteDb.pinned,
-            lastUpdate = noteDb.lastUpdate
+            lastUpdate = noteDb.lastUpdate,
+            photoPaths = noteDb.photoPaths,
+            isArchived = noteDb.isArchived,
         )
     }
 }

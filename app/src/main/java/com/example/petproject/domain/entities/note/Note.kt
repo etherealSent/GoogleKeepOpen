@@ -7,5 +7,7 @@ data class Note(
     val title: String = "",
     val content: String = "",
     val pinned: Boolean = false,
-    val lastUpdate: Date = Date(0L)
+    val lastUpdate: Date = Date(0L),
+    val photoPaths: List<String> = emptyList(),
+    val isArchived: Boolean = false,
 )

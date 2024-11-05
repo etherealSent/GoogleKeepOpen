@@ -17,11 +17,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.petproject.PetDestinationsArgs.NOTE_ID_ARG
-import com.example.petproject.presentation.editNote.EditNoteScreen
 import com.example.petproject.presentation.editNote.EditNoteScreenWrapper
+import com.example.petproject.presentation.editNote.camera.CameraScreen
 import com.example.petproject.presentation.editTags.EditTagsScreenWrapper
-import com.example.petproject.presentation.main.MainNavigationDrawer
 import com.example.petproject.presentation.main.MainScreenWrapper
 import kotlinx.coroutines.CoroutineScope
 
@@ -37,6 +35,7 @@ fun PetNavGraph(
         PetNavigationActions(navController)
     }
 ) {
+
     val currentNavBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentNavBackStackEntry?.destination?.route ?: startDestination
 
@@ -60,17 +59,45 @@ fun PetNavGraph(
             )
         ) { entry ->
             val noteId = entry.arguments?.getString("noteId")
+            val uri = entry.savedStateHandle.get<String>("uri")
+
             val sheetState = rememberModalBottomSheetState()
 
             EditNoteScreenWrapper(
                 onBack = { navController.popBackStack() },
                 sheetState = sheetState,
-                coroutineScope = coroutineScope
+                coroutineScope = coroutineScope,
+                openCamera = {
+                             noteId, noteTitle -> navActions.navigateToEditNoteCamera(noteId)
+                    navController.currentBackStackEntry?.savedStateHandle?.set("noteTitle", noteTitle)
+                             },
+                uri = uri
             )
         }
         composable(PetDestinations.EDIT_TAGS_ROUTE) {
             EditTagsScreenWrapper(
                 onBack = { navController.popBackStack() }
+            )
+        }
+        composable(
+            "note_details_camera/{noteId}",
+            arguments = listOf(
+                navArgument("noteId") { type = NavType.StringType; nullable = true },
+            )
+        ) { entry ->
+            val noteId = entry.arguments?.getString("noteId")
+            val noteTitle = entry.savedStateHandle.get<String>("noteTitle")
+
+            CameraScreen(
+                onBack = {
+                    uri ->
+                    navController.popBackStack()
+                    navController.currentBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("uri", uri)
+                },
+                noteTitle = noteTitle,
+                coroutineScope = coroutineScope
             )
         }
     }

@@ -24,12 +24,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.DrawerState
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -80,11 +82,22 @@ fun MainScreen(
     notes: List<NoteUi>,
     onNavigationIconClicked: () -> Unit,
     onAddNote: () -> Unit,
-    onNoteClick: (NoteUi) -> Unit
+    onNoteClick: (NoteUi) -> Unit,
+    screenType: MainScreenType
 ) {
 
     Scaffold(
-        bottomBar = { BottomBar(onAddNote) },
+        floatingActionButton = { FAB(onAddNote) },
+        topBar = {
+            when (screenType) {
+                MainScreenType.Notes -> {}
+                MainScreenType.ConcreteNote -> {
+
+                }
+                MainScreenType.Bucket -> {}
+                MainScreenType.Archive -> {}
+            }
+        }
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
             LazyColumn(
@@ -133,7 +146,9 @@ fun MainScreen(
 
 inline fun LazyListScope.categoryNotesBlock(noteUis: List<NoteUi>, crossinline onNoteClick: (NoteUi) -> Unit) {
     items(noteUis) { note ->
-        Note(modifier = Modifier.padding(bottom = 8.dp).clickable { onNoteClick(note) },note)
+        Note(modifier = Modifier
+            .padding(bottom = 8.dp)
+            .clickable { onNoteClick(note) },note)
     }
 }
 
@@ -176,6 +191,22 @@ fun SearchBar(
 
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ConcreteTopAppBar(
+    title: String,
+    onNavigationIconClicked: () -> Unit
+) {
+    TopAppBar(
+        title = { Text(text = title) },
+        navigationIcon = {
+            IconButton(onClick = onNavigationIconClicked) {
+                Icon(imageVector = ImageVector.vectorResource(id = R.drawable.menu_24dp_e8eaed_fill0_wght400_grad0_opsz24), contentDescription = "openMenu")
+            }
+        }
+    )
 }
 
 @Composable
@@ -300,44 +331,15 @@ fun TagsLayout(tags: List<TagUi>, parentWidth: Dp) {
 }
 
 
-@Composable
-fun BottomBar(onFabClick: () -> Unit) {
-    BottomAppBar(
-        floatingActionButton = { FAB(onFabClick) },
-        actions = {
-            IconButton(onClick = {}) {
-                Icon(
-                    imageVector = ImageVector.vectorResource(
-                        id = R.drawable.check_box_24dp_e8eaed_fill0_wght400_grad0_opsz24
-                    ),
-                    contentDescription = "Add new list"
-                )
-            }
-            IconButton(onClick = { /*TODO*/ }) {
-                Icon(
-                    imageVector = ImageVector.vectorResource(
-                        id = R.drawable.brush_24dp_e8eaed_fill0_wght400_grad0_opsz24
-                    ),
-                    contentDescription = "Create a painting"
-                )            }
-            IconButton(onClick = { /*TODO*/ }) {
-                Icon(
-                    imageVector = ImageVector.vectorResource(
-                        id = R.drawable.mic_24dp_e8eaed_fill0_wght400_grad0_opsz24
-                    ),
-                    contentDescription = "Create an audio-note"
-                )            }
-            IconButton(onClick = { /*TODO*/ }) {
-                Icon(
-                    imageVector = ImageVector.vectorResource(
-                        id = R.drawable.image_24dp_e8eaed_fill0_wght400_grad0_opsz24
-                    ),
-                    contentDescription = "Create a photo-note"
-                )
-            }
-        }
-    )
-}
+//@Composable
+//fun BottomBar(onFabClick: () -> Unit) {
+//    BottomAppBar(
+//        floatingActionButton = { FAB(onFabClick) },
+//        actions = {},
+//        containerColor = Color.Transparent,
+//        contentColor = Color.Transparent
+//    )
+//}
 
 @Composable
 fun Tag(
@@ -377,13 +379,13 @@ fun SearchBarPreview() {
 }
 
 
-@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
-@Composable
-fun BottomBarPreview() {
-    PetProjectTheme {
-        BottomBar({})
-    }
-}
+//@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
+//@Composable
+//fun BottomBarPreview() {
+//    PetProjectTheme {
+//        BottomBar({})
+//    }
+//}
 
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
@@ -459,7 +461,7 @@ fun MainScreenPreview() {
                 NoteUi(title = "d", content = "bsxac", tags = listOf(), pinned = true),
 
 
-            ), onNavigationIconClicked = {}, onAddNote = {}, onNoteClick = {}
+            ), onNavigationIconClicked = {}, onAddNote = {}, onNoteClick = {}, screenType = MainScreenType.Notes
         )
     }
 }

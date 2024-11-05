@@ -16,34 +16,40 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val noteToUiMapper: NoteToUiMapper,
-    private val noteToDomainMapper: NoteToDomainMapper,
     private val observeNotesUseCase: ObserveNotesUseCase,
-    private val saveNoteUseCase: SaveNoteUseCase
     ) : ViewModel() {
 
     private val _isLoading = MutableStateFlow(false)
+    private val _screenType = MutableStateFlow(MainScreenType.Notes)
+
     private val _notes = observeNotesUseCase
         .observeNotes()
         .map { Async.Success(it) }
         .catch<Async<List<Note>>> { emit(Async.Error(R.string.loading_tasks_error)) }
 
     val uiState: StateFlow<MainState> = combine(
-        _isLoading, _notes
-    )  { isLoading, notes ->
+        _isLoading, _notes, _screenType
+    )  { isLoading, notes, screenType ->
         when(notes) {
             is Async.Loading -> {
                 MainState(isLoading = true)
             }
             is Async.Error -> MainState()
-            is Async.Success -> MainState(notesWithTags = notes.data.map { noteToUiMapper(it) })
+            is Async.Success -> MainState(
+                notesWithTags = notes.data.map { noteToUiMapper(it) },
+                isLoading = false,
+                screenType = screenType
+            )
         }
     }.stateIn(
         scope = viewModelScope,
@@ -51,9 +57,8 @@ class MainViewModel @Inject constructor(
         initialValue = MainState(isLoading = true)
     )
 
-    fun createNote() {
-        viewModelScope.launch {
-            saveNoteUseCase.saveNote(noteToDomainMapper(NoteUi("", "aa", "bb", listOf(), false)))
-        }
+    fun changeScreenType(screenType: MainScreenType) {
+        _screenType.value = screenType
     }
+
 }

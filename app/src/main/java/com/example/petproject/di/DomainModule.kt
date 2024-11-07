@@ -4,8 +4,12 @@ import com.example.petproject.domain.repository.note.NoteRepository
 import com.example.petproject.domain.repository.note.TagRepository
 import com.example.petproject.domain.usecases.note.GetNoteByIdUseCase
 import com.example.petproject.domain.usecases.note.GetNoteByIdUseCaseImpl
+import com.example.petproject.domain.usecases.note.GetNoteWithTagsByIdUseCase
+import com.example.petproject.domain.usecases.note.GetNoteWithTagsByIdUseCaseImpl
 import com.example.petproject.domain.usecases.note.ObserveNotesUseCase
 import com.example.petproject.domain.usecases.note.ObserveNotesUseCaseImpl
+import com.example.petproject.domain.usecases.note.ObserveNotesWithTagsUseCase
+import com.example.petproject.domain.usecases.note.ObserveNotesWithTagsUseCaseImpl
 import com.example.petproject.domain.usecases.tag.ObserveTagsUseCase
 import com.example.petproject.domain.usecases.tag.ObserveTagsUseCaseImpl
 import com.example.petproject.domain.usecases.note.SaveNoteUseCase
@@ -85,4 +89,19 @@ object DomainModule {
         return SaveTagUseCaseImpl(repository)
     }
 
+    @Singleton
+    @Provides
+    fun providesObserveNotesWithTagsUseCase(
+        repository: NoteRepository
+    ) : ObserveNotesWithTagsUseCase {
+        return ObserveNotesWithTagsUseCaseImpl(repository)
+    }
+
+    @Singleton
+    @Provides
+    fun providesGetNoteWithTagsByIdUseCase(
+        repository: NoteRepository
+    ) : GetNoteWithTagsByIdUseCase {
+        return GetNoteWithTagsByIdUseCaseImpl(repository)
+    }
 }

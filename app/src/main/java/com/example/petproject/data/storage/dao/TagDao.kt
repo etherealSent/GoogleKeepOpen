@@ -8,6 +8,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import com.example.petproject.data.storage.entities.TagDb
+import com.example.petproject.data.storage.relations.NoteWithTagsDb
 import com.example.petproject.data.storage.relations.TagWithNotesDb
 import kotlinx.coroutines.flow.Flow
 
@@ -31,4 +32,8 @@ interface TagDao {
 
     @Query("SELECT * FROM tag WHERE tagId=:id")
     fun getTagById(id: String): TagDb?
+
+    @Transaction
+    @Query("SELECT * FROM tag")
+    fun getTagWithNotes(): List<TagWithNotesDb>
 }

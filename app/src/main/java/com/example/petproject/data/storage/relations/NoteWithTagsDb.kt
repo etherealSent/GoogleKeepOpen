@@ -10,11 +10,11 @@ import com.example.petproject.data.storage.entities.TagNoteCrossRef
 
 data class NoteWithTagsDb(
     @Embedded
-    val noteDb: NoteDb,
+    val noteDb: NoteDb = NoteDb(),
     @Relation(
         parentColumn = "noteId",
         entityColumn = "tagId",
-//        associateBy = Junction(TagNoteCrossRef::class)
+        associateBy = Junction(TagNoteCrossRef::class)
     )
-    val tagDbs: List<TagDb>
+    val tagDbs: List<TagDb> = emptyList()
 )

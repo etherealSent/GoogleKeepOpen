@@ -10,4 +10,5 @@ data class Note(
     val lastUpdate: Date = Date(0L),
     val photoPaths: List<String> = emptyList(),
     val isArchived: Boolean = false,
+    val isDeleted: Boolean = false
 )

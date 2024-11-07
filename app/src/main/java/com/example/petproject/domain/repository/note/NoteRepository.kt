@@ -3,10 +3,12 @@ package com.example.petproject.domain.repository.note
 import com.example.petproject.data.storage.dao.NoteDao
 import com.example.petproject.data.storage.entities.NoteDb
 import com.example.petproject.data.storage.mappers.note.NoteDbToDomainMapper
-import com.example.petproject.data.storage.mappers.note.NotesDbToDomainMapper
+import com.example.petproject.data.storage.mappers.note.NoteWithTagsDbToDomainMapper
+import com.example.petproject.data.storage.relations.NoteWithTagsDb
 import com.example.petproject.di.ApplicationScope
 import com.example.petproject.di.DefaultDispatcher
 import com.example.petproject.domain.entities.note.Note
+import com.example.petproject.domain.entities.note.NoteWithTags
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -21,13 +23,15 @@ interface NoteRepository {
     fun getNotesStream(): Flow<List<Note>>
     suspend fun createNote(note: NoteDb)
     suspend fun getNoteById(id: String) : Note?
+    suspend fun getNoteWithTagsById(id: String) : NoteWithTags?
     suspend fun updateNote(note: NoteDb)
+    fun getNotesWithTagsStream(): Flow<List<NoteWithTags>>
 }
 
 class NoteRepositoryImpl @Inject constructor(
     private val noteDao: NoteDao,
-    private val notesDbToDomainMapper: NotesDbToDomainMapper,
     private val noteDbToDomainMapper: NoteDbToDomainMapper,
+    private val noteWithTagsDbToDomainMapper: NoteWithTagsDbToDomainMapper,
     @DefaultDispatcher private val dispatcher: CoroutineDispatcher,
     @ApplicationScope private val scope: CoroutineScope
 ) : NoteRepository {
@@ -35,7 +39,7 @@ class NoteRepositoryImpl @Inject constructor(
     override fun getNotesStream(): Flow<List<Note>> {
         return noteDao.observeNotes().map { notes ->
             withContext(dispatcher) {
-                notesDbToDomainMapper(notes)
+                notes.map(noteDbToDomainMapper)
             }
         }
     }
@@ -55,7 +59,21 @@ class NoteRepositoryImpl @Inject constructor(
         )
     }
 
+    override suspend fun getNoteWithTagsById(id: String): NoteWithTags? {
+        return noteWithTagsDbToDomainMapper(
+            noteDao.getNoteWithTags(id) ?: NoteWithTagsDb()
+        )
+    }
+
     override suspend fun updateNote(note: NoteDb) {
         noteDao.upsertNote(note)
+    }
+
+    override fun getNotesWithTagsStream(): Flow<List<NoteWithTags>> {
+        return noteDao.observeNoteWithTags().map { notes ->
+            withContext(dispatcher) {
+                notes.map(noteWithTagsDbToDomainMapper)
+            }
+        }
     }
 }

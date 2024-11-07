@@ -4,10 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.petproject.R
 import com.example.petproject.domain.entities.note.Note
+import com.example.petproject.domain.entities.note.NoteWithTags
 import com.example.petproject.domain.usecases.note.ObserveNotesUseCase
+import com.example.petproject.domain.usecases.note.ObserveNotesWithTagsUseCase
 import com.example.petproject.domain.usecases.note.SaveNoteUseCase
 import com.example.petproject.presentation.mappers.NoteToDomainMapper
 import com.example.petproject.presentation.mappers.NoteToUiMapper
+import com.example.petproject.presentation.mappers.NoteWithTagsToUiMapper
 import com.example.petproject.presentation.model.NoteUi
 import com.example.petproject.utils.Async
 import com.example.petproject.utils.WhileUiSubscribed
@@ -26,16 +29,18 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val noteToUiMapper: NoteToUiMapper,
+    private val noteWithTagsToUiMapper: NoteWithTagsToUiMapper,
     private val observeNotesUseCase: ObserveNotesUseCase,
+    private val observeNotesWithTagsUseCase: ObserveNotesWithTagsUseCase
     ) : ViewModel() {
 
     private val _isLoading = MutableStateFlow(false)
     private val _screenType = MutableStateFlow(MainScreenType.Notes)
 
-    private val _notes = observeNotesUseCase
-        .observeNotes()
+    private val _notes = observeNotesWithTagsUseCase
+        .observeNotesWithTags()
         .map { Async.Success(it) }
-        .catch<Async<List<Note>>> { emit(Async.Error(R.string.loading_tasks_error)) }
+        .catch<Async<List<NoteWithTags>>> { emit(Async.Error(R.string.loading_tasks_error)) }
 
     val uiState: StateFlow<MainState> = combine(
         _isLoading, _notes, _screenType
@@ -46,7 +51,7 @@ class MainViewModel @Inject constructor(
             }
             is Async.Error -> MainState()
             is Async.Success -> MainState(
-                notesWithTags = notes.data.map { noteToUiMapper(it) },
+                notesWithTags = notes.data.map { noteWithTagsToUiMapper(it) },
                 isLoading = false,
                 screenType = screenType
             )

@@ -14,7 +14,7 @@ import com.example.petproject.data.storage.entities.TagNoteCrossRef
 @Database(
     entities = [NoteDb::class, TagDb::class,
         TagNoteCrossRef::class],
-    version = 9,
+    version = 11,
     exportSchema = false
     )
 @TypeConverters(DataConverters::class, PhotoPathsConverters::class)

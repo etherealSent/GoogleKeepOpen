@@ -10,9 +10,16 @@ import javax.inject.Inject
 class NoteWithTagsDbToDomainMapper @Inject constructor() : (NoteWithTagsDb) -> NoteWithTags {
     override fun invoke(noteWithTagsDb: NoteWithTagsDb): NoteWithTags {
         return NoteWithTags(
-            title = noteWithTagsDb.noteDb.title,
-            content = noteWithTagsDb.noteDb.content,
-            pinned = noteWithTagsDb.noteDb.pinned,
+            note = Note(
+                id = noteWithTagsDb.noteDb.noteId,
+                title = noteWithTagsDb.noteDb.title,
+                content = noteWithTagsDb.noteDb.content,
+                pinned = noteWithTagsDb.noteDb.pinned,
+                lastUpdate = noteWithTagsDb.noteDb.lastUpdate,
+                photoPaths = noteWithTagsDb.noteDb.photoPaths,
+                isArchived = noteWithTagsDb.noteDb.isArchived,
+                isDeleted = noteWithTagsDb.noteDb.isDeleted
+            ),
             tags = noteWithTagsDb.tagDbs.map { tagDb ->
                 Tag(tagDb.name)
             }

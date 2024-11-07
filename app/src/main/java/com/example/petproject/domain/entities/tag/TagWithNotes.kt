@@ -1,8 +1,8 @@
 package com.example.petproject.domain.entities.tag
 
-import com.example.petproject.domain.entities.note.NotesWithTags
+import com.example.petproject.domain.entities.note.Note
 
 data class TagWithNotes(
     val tag: Tag,
-    val notes: NotesWithTags
+    val notes: List<Note>
 )

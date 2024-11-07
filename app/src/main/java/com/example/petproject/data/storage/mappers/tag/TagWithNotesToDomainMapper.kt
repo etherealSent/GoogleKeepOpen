@@ -4,7 +4,6 @@ import com.example.petproject.data.storage.entities.TagDb
 import com.example.petproject.data.storage.relations.TagWithNotesDb
 import com.example.petproject.domain.entities.note.Note
 import com.example.petproject.domain.entities.note.NoteWithTags
-import com.example.petproject.domain.entities.note.NotesWithTags
 import com.example.petproject.domain.entities.tag.Tag
 import com.example.petproject.domain.entities.tag.TagWithNotes
 import javax.inject.Inject

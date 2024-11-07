@@ -15,12 +15,6 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface NoteDao {
 
-//    @Insert(onConflict = OnConflictStrategy.REPLACE)
-//    fun insertNote(noteDb: NoteDb)
-
-//    @Update
-//    fun updateNote(noteDb: NoteDb)
-
     @Upsert
     fun upsertNote(noteDb: NoteDb)
 
@@ -35,4 +29,12 @@ interface NoteDao {
 
     @Query("SELECT * FROM note")
     fun observeNotes() : Flow<List<NoteDb>>
+
+    @Transaction
+    @Query("SELECT * FROM note WHERE noteId=:id")
+    fun getNoteWithTags(id: String) : NoteWithTagsDb?
+
+    @Transaction
+    @Query("SELECT * FROM note")
+    fun observeNoteWithTags(): Flow<List<NoteWithTagsDb>>
 }

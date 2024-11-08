@@ -105,7 +105,8 @@ fun EditNoteScreenWrapper(
         openCamera = { openCamera(state.noteId, state.title) },
         photoPaths = state.photoPaths,
         isNewNote = state.noteId == "",
-        addNewPhotoPath = viewModel::addNewPhotoPath
+        addNewPhotoPath = viewModel::addNewPhotoPath,
+        bottomSheetType = state.bottomSheetType
 //        formatLastUpdateTime = viewModel::formatLastUpdateTime
     )
 }
@@ -121,7 +122,7 @@ fun EditNoteScreen(
     onBack: () -> Unit,
     pinned: Boolean,
     onPinned: () -> Unit,
-    updateShowBottomSheet: (Boolean) -> Unit,
+    updateShowBottomSheet: (Boolean, BottomSheetType) -> Unit,
     showBottomSheet: Boolean,
     sheetState: SheetState,
     lastUpdate: Date,
@@ -129,7 +130,8 @@ fun EditNoteScreen(
     openCamera: () -> Unit,
     photoPaths: List<String>?,
     isNewNote: Boolean,
-    addNewPhotoPath: (String) -> Unit
+    addNewPhotoPath: (String) -> Unit,
+    bottomSheetType: BottomSheetType
 //    formatLastUpdateTime: (Date) -> Unit
 ) {
 
@@ -167,46 +169,53 @@ fun EditNoteScreen(
         if (showBottomSheet) {
             ModalBottomSheet(
                 onDismissRequest = {
-                    updateShowBottomSheet(false)
+                    updateShowBottomSheet(false, BottomSheetType.Add)
                 },
                 sheetState = sheetState,
                 dragHandle = {},
             ) {
-                Column(
-                    modifier = Modifier.padding(top = 10.dp, start = 5.dp)
-                ) {
-                    BottomSheetOption(
-                        icon = ImageVector.vectorResource(id = R.drawable.photo_camera_24dp_5f6368_fill0_wght400_grad0_opsz24),
-                        contentDescription = "Сделать снимок",
-                        text = "Делать снимок",
-                        onClick = {
-                            openCamera()
-                            updateShowBottomSheet(false)
+                when(bottomSheetType) {
+                    BottomSheetType.Add -> {
+                        Column(
+                            modifier = Modifier.padding(top = 10.dp, start = 5.dp)
+                        ) {
+                            BottomSheetOption(
+                                icon = ImageVector.vectorResource(id = R.drawable.photo_camera_24dp_5f6368_fill0_wght400_grad0_opsz24),
+                                contentDescription = "Сделать снимок",
+                                text = "Делать снимок",
+                                onClick = {
+                                    openCamera()
+                                    updateShowBottomSheet(false, BottomSheetType.Add)
+                                }
+                            )
+                            BottomSheetOption(
+                                icon = ImageVector.vectorResource(id = R.drawable.image_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+                                contentDescription = "Добавить картинку",
+                                text = "Добавить картинку",
+                                onClick = {
+                                    pickPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                                }
+                            )
+                            BottomSheetOption(
+                                icon = ImageVector.vectorResource(id = R.drawable.brush_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+                                contentDescription = "Рисунок",
+                                text = "Рисунок"
+                            )
+                            BottomSheetOption(
+                                icon = ImageVector.vectorResource(id = R.drawable.mic_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+                                contentDescription = "Аудиозапись",
+                                text = "Аудиозапись"
+                            )
+                            BottomSheetOption(
+                                icon = ImageVector.vectorResource(id = R.drawable.check_box_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+                                contentDescription = "Несколько из списка",
+                                text = "Несколько из списка"
+                            )
                         }
-                    )
-                    BottomSheetOption(
-                        icon = ImageVector.vectorResource(id = R.drawable.image_24dp_e8eaed_fill0_wght400_grad0_opsz24),
-                        contentDescription = "Добавить картинку",
-                        text = "Добавить картинку",
-                        onClick = {
-                            pickPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                        }
-                    )
-                    BottomSheetOption(
-                        icon = ImageVector.vectorResource(id = R.drawable.brush_24dp_e8eaed_fill0_wght400_grad0_opsz24),
-                        contentDescription = "Рисунок",
-                        text = "Рисунок"
-                    )
-                    BottomSheetOption(
-                        icon = ImageVector.vectorResource(id = R.drawable.mic_24dp_e8eaed_fill0_wght400_grad0_opsz24),
-                        contentDescription = "Аудиозапись",
-                        text = "Аудиозапись"
-                    )
-                    BottomSheetOption(
-                        icon = ImageVector.vectorResource(id = R.drawable.check_box_24dp_e8eaed_fill0_wght400_grad0_opsz24),
-                        contentDescription = "Несколько из списка",
-                        text = "Несколько из списка"
-                    )
+                    }
+                    BottomSheetType.MoreVert -> {
+
+                    }
                 }
             }
         }
@@ -331,7 +340,7 @@ fun EditNoteTopBar(
 
 @Composable
 fun EditNoteBottomBar(
-    updateShowBottomSheet: (Boolean) -> Unit,
+    updateShowBottomSheet: (Boolean, BottomSheetType) -> Unit,
     lastUpdate: Date,
     isNewNote: Boolean
 ) {
@@ -340,7 +349,7 @@ fun EditNoteBottomBar(
         actions = {
             IconButton(
                 onClick = {
-                    updateShowBottomSheet(true)
+                    updateShowBottomSheet(true, BottomSheetType.Add)
                 }
             ) {
                 Icon(ImageVector.vectorResource(R.drawable.add_box_24dp_5f6368_fill0_wght400_grad0_opsz24), contentDescription = "pin note")
@@ -355,14 +364,15 @@ fun EditNoteBottomBar(
             ) {
                 Icon(ImageVector.vectorResource(R.drawable.text_format_24dp_5f6368_fill0_wght400_grad0_opsz24), contentDescription = "pin note")
             }
-            if (!isNewNote) {
-                Text(text = "Изменено $lastUpdate", style = MaterialTheme.typography.bodySmall)
-            }
-            Spacer(modifier = Modifier.weight(1f))
             IconButton(
-                onClick = {}
+                onClick = {
+                    updateShowBottomSheet(true, BottomSheetType.MoreVert)
+                }
             ) {
                 Icon(Icons.Default.MoreVert, contentDescription = "more actions")
+            }
+            if (!isNewNote) {
+                Text(text = "Изменено $lastUpdate", style = MaterialTheme.typography.bodySmall)
             }
         }
     )
@@ -383,14 +393,15 @@ fun EditNoteScreenPreview() {
             onPinned = {},
             pinned = true,
             showBottomSheet = true,
-            updateShowBottomSheet = {},
+            updateShowBottomSheet = { _, _ -> },
             sheetState = rememberModalBottomSheetState(),
             lastUpdate = Date(100L),
             coroutineScope = rememberCoroutineScope(),
             openCamera = {},
             photoPaths = emptyList(),
             isNewNote = false,
-            addNewPhotoPath = {}
+            addNewPhotoPath = {},
+            bottomSheetType = BottomSheetType.Add
 //            formatLastUpdateTime = {}
         )
     }

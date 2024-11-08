@@ -118,9 +118,9 @@ class EditNoteViewModel @Inject constructor(
         }
     }
 
-    fun updateShowBottomSheet(bool: Boolean) {
+    fun updateShowBottomSheet(bool: Boolean, type: BottomSheetType = BottomSheetType.Add) {
         _uiState.update {
-            it.copy(showBottomSheet = bool)
+            it.copy(showBottomSheet = bool, bottomSheetType = type)
         }
     }
 

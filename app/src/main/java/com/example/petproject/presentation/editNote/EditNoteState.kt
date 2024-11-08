@@ -14,5 +14,6 @@ data class EditNoteState(
     val showBottomSheet: Boolean = false,
     val lastUpdate: Date = Date(0L),
     val formattedDate: String = "",
-    val isCamera: Boolean = false
+    val isCamera: Boolean = false,
+    val bottomSheetType: BottomSheetType = BottomSheetType.Add
 )

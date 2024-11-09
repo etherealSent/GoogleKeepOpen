@@ -211,8 +211,7 @@ fun MainNavigationDrawer(
                        if (isClosed) open() else close()
                     }
                 }
-            },
-            screenType = MainScreenType.Notes
+            }
         )
     }
 }

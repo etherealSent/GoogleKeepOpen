@@ -2,6 +2,8 @@ package com.example.petproject.di
 
 import com.example.petproject.domain.repository.note.NoteRepository
 import com.example.petproject.domain.repository.note.TagRepository
+import com.example.petproject.domain.usecases.note.DeleteNoteUseCase
+import com.example.petproject.domain.usecases.note.DeleteNoteUseCaseImpl
 import com.example.petproject.domain.usecases.note.GetNoteByIdUseCase
 import com.example.petproject.domain.usecases.note.GetNoteByIdUseCaseImpl
 import com.example.petproject.domain.usecases.note.GetNoteWithTagsByIdUseCase
@@ -103,5 +105,13 @@ object DomainModule {
         repository: NoteRepository
     ) : GetNoteWithTagsByIdUseCase {
         return GetNoteWithTagsByIdUseCaseImpl(repository)
+    }
+
+    @Singleton
+    @Provides
+    fun providesDeleteNoteUseCase(
+        repository: NoteRepository
+    ) : DeleteNoteUseCase {
+        return DeleteNoteUseCaseImpl(repository)
     }
 }

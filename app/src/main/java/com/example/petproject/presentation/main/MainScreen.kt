@@ -83,20 +83,11 @@ fun MainScreen(
     onNavigationIconClicked: () -> Unit,
     onAddNote: () -> Unit,
     onNoteClick: (NoteUi) -> Unit,
-    screenType: MainScreenType
 ) {
 
     Scaffold(
         floatingActionButton = { FAB(onAddNote) },
         topBar = {
-            when (screenType) {
-                MainScreenType.Notes -> {}
-                MainScreenType.ConcreteNote -> {
-
-                }
-                MainScreenType.Bucket -> {}
-                MainScreenType.Archive -> {}
-            }
         }
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
@@ -108,23 +99,15 @@ fun MainScreen(
                 item {
                     Spacer(modifier = Modifier.height(18.dp))
                 }
-                item {
-                    NotesCategoryName(
-                        name = "Закрепленные",modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp, top = 52.dp)
-                    )
-                }
 
                 categoryNotesBlock(
-                    notes.filter { it.pinned },
+                    categoryName = "Закреплённые",
+                    noteUis = notes.filter { it.pinned },
                     onNoteClick = onNoteClick
                 )
 
-                item {
-                    NotesCategoryName(
-                        name = "Другие",modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
-                    )
-                }
                 categoryNotesBlock(
+                    categoryName = "Другие",
                     notes.filter { !it.pinned },
                     onNoteClick = onNoteClick
                 )
@@ -144,7 +127,14 @@ fun MainScreen(
     }
 }
 
-inline fun LazyListScope.categoryNotesBlock(noteUis: List<NoteUi>, crossinline onNoteClick: (NoteUi) -> Unit) {
+inline fun LazyListScope.categoryNotesBlock(categoryName: String = "", noteUis: List<NoteUi>, crossinline onNoteClick: (NoteUi) -> Unit) {
+    if (noteUis.isNotEmpty()) {
+        item {
+            NotesCategoryName(
+                name = categoryName, modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp, top = 52.dp)
+            )
+        }
+    }
     items(noteUis) { note ->
         Note(modifier = Modifier
             .padding(bottom = 8.dp)
@@ -461,7 +451,7 @@ fun MainScreenPreview() {
                 NoteUi(title = "d", content = "bsxac", tags = listOf(), pinned = true),
 
 
-            ), onNavigationIconClicked = {}, onAddNote = {}, onNoteClick = {}, screenType = MainScreenType.Notes
+            ), onNavigationIconClicked = {}, onAddNote = {}, onNoteClick = {}
         )
     }
 }

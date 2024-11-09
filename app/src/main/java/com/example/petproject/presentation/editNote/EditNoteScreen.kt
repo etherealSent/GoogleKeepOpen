@@ -1,5 +1,6 @@
 package com.example.petproject.presentation.editNote
 
+import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.drawable.Icon
 import android.net.Uri
@@ -51,9 +52,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.Key.Companion.I
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat.startActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.rememberAsyncImagePainter
@@ -76,7 +79,8 @@ fun EditNoteScreenWrapper(
     viewModel: EditNoteViewModel = hiltViewModel(),
     coroutineScope: CoroutineScope,
     openCamera: (String?, String) -> Unit,
-    uri: String?
+    uri: String?,
+    navigateToCopiedNote: (String) -> Unit
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -84,6 +88,14 @@ fun EditNoteScreenWrapper(
         if (uri != null) {
             launch {
                 viewModel.addNewPhotoPath(uri)
+            }
+        }
+    }
+
+    if (state.copiedId.isNotEmpty()) {
+        LaunchedEffect(coroutineScope) {
+            launch {
+                navigateToCopiedNote(state.copiedId)
             }
         }
     }
@@ -106,7 +118,10 @@ fun EditNoteScreenWrapper(
         photoPaths = state.photoPaths,
         isNewNote = state.noteId == "",
         addNewPhotoPath = viewModel::addNewPhotoPath,
-        bottomSheetType = state.bottomSheetType
+        bottomSheetType = state.bottomSheetType,
+        deleteNote = viewModel::deleteNote,
+        archiveNote = viewModel::archiveNote,
+        copyNote = viewModel::copyNote
 //        formatLastUpdateTime = viewModel::formatLastUpdateTime
     )
 }
@@ -128,10 +143,13 @@ fun EditNoteScreen(
     lastUpdate: Date,
     coroutineScope: CoroutineScope,
     openCamera: () -> Unit,
+    deleteNote: () -> Unit,
+    archiveNote: () -> Unit,
     photoPaths: List<String>?,
     isNewNote: Boolean,
     addNewPhotoPath: (String) -> Unit,
-    bottomSheetType: BottomSheetType
+    bottomSheetType: BottomSheetType,
+    copyNote: () -> Unit
 //    formatLastUpdateTime: (Date) -> Unit
 ) {
 
@@ -143,6 +161,14 @@ fun EditNoteScreen(
         }
     }
 
+    val sendIntent: Intent = Intent().apply {
+        action = Intent.ACTION_SEND
+        putExtra(Intent.EXTRA_TEXT, content)
+        type = "text/plain"
+    }
+    val shareIntent = Intent.createChooser(sendIntent, null)
+    val context = LocalContext.current
+
 
     Scaffold(
         topBar = {
@@ -151,6 +177,7 @@ fun EditNoteScreen(
                 onBack = onBack,
                 pinned = pinned,
                 onPinned = onPinned,
+                archiveNote
             )
         },
         bottomBar = {
@@ -193,6 +220,7 @@ fun EditNoteScreen(
                                 contentDescription = "Добавить картинку",
                                 text = "Добавить картинку",
                                 onClick = {
+                                    updateShowBottomSheet(false, BottomSheetType.Add)
                                     pickPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                                 }
                             )
@@ -214,7 +242,53 @@ fun EditNoteScreen(
                         }
                     }
                     BottomSheetType.MoreVert -> {
-
+                        Column(
+                            modifier = Modifier.padding(top = 10.dp, start = 5.dp)
+                        ) {
+                            BottomSheetOption(
+                                icon = ImageVector.vectorResource(id = R.drawable.delete_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+                                contentDescription = "Удалить",
+                                text = "Удалить",
+                                onClick = {
+                                    updateShowBottomSheet(false, BottomSheetType.Add)
+                                    deleteNote()
+                                    onBack()
+                                    saveNote(Calendar.getInstance().time)
+                                }
+                            )
+                            BottomSheetOption(
+                                icon = ImageVector.vectorResource(id = R.drawable.content_copy_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+                                contentDescription = "Скопировать",
+                                text = "Скопировать",
+                                onClick = {
+                                    copyNote()
+                                }
+                            )
+                            BottomSheetOption(
+                                icon = ImageVector.vectorResource(id = R.drawable.share_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+                                contentDescription = "Отправить",
+                                text = "Отправить",
+                                onClick = {
+                                    context.startActivity(shareIntent)
+                                    updateShowBottomSheet(false, BottomSheetType.Add)
+                                }
+                            )
+                            BottomSheetOption(
+                                icon = ImageVector.vectorResource(id = R.drawable.person_add_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+                                contentDescription = "Соавторы",
+                                text = "Соавторы"
+                            )
+                            BottomSheetOption(
+                                icon = ImageVector.vectorResource(id = R.drawable.label_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+                                contentDescription = "Ярлыки",
+                                text = "Ярлыки"
+                            )
+                            BottomSheetOption(
+                                icon = ImageVector.vectorResource(id = R.drawable.help_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+                                contentDescription = "Справка/отзыв",
+                                text = "Справка/отзыв"
+                            )
+                        }
                     }
                 }
             }
@@ -301,6 +375,7 @@ fun EditNoteTopBar(
     onBack: () -> Unit,
     pinned: Boolean,
     onPinned: () -> Unit,
+    archiveNote: () -> Unit
 ) {
     TopAppBar(
         title = {},
@@ -330,7 +405,11 @@ fun EditNoteTopBar(
                 Icon(ImageVector.vectorResource(R.drawable.add_alert_24dp_5f6368_fill0_wght400_grad0_opsz24), contentDescription = "pin note")
             }
             IconButton(
-                onClick = {}
+                onClick = {
+                    archiveNote()
+                    saveNote(Calendar.getInstance().time)
+                    onBack()
+                }
             ) {
                 Icon(ImageVector.vectorResource(R.drawable.archive_24dp_e8eaed_fill0_wght400_grad0_opsz24), contentDescription = "pin note")
             }
@@ -401,7 +480,10 @@ fun EditNoteScreenPreview() {
             photoPaths = emptyList(),
             isNewNote = false,
             addNewPhotoPath = {},
-            bottomSheetType = BottomSheetType.Add
+            bottomSheetType = BottomSheetType.Add,
+            deleteNote = {},
+            archiveNote = {},
+            copyNote = {}
 //            formatLastUpdateTime = {}
         )
     }

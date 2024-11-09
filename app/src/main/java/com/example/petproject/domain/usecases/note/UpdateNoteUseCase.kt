@@ -21,7 +21,9 @@ class UpdateNoteUseCaseImpl @Inject constructor(
             content = note.content,
             pinned = note.pinned,
             lastUpdate = note.lastUpdate,
-            photoPaths = note.photoPaths
+            photoPaths = note.photoPaths,
+            isDeleted = note.isDeleted,
+            isArchived = note.isArchived
         ) ?: throw Exception("Task (id ${note.id}) not found")
 
         noteRepository.updateNote(noteToDbMapper(fetchedNote))

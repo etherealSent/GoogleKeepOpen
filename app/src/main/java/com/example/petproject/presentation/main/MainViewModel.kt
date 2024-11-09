@@ -28,9 +28,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val noteToUiMapper: NoteToUiMapper,
     private val noteWithTagsToUiMapper: NoteWithTagsToUiMapper,
-    private val observeNotesUseCase: ObserveNotesUseCase,
     private val observeNotesWithTagsUseCase: ObserveNotesWithTagsUseCase
     ) : ViewModel() {
 
@@ -51,7 +49,7 @@ class MainViewModel @Inject constructor(
             }
             is Async.Error -> MainState()
             is Async.Success -> MainState(
-                notesWithTags = notes.data.map { noteWithTagsToUiMapper(it) },
+                notesWithTags = notes.data.map { noteWithTagsToUiMapper(it) }.filter { !it.isArchived && !it.isDeleted },
                 isLoading = false,
                 screenType = screenType
             )

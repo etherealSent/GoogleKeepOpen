@@ -21,11 +21,12 @@ import javax.inject.Inject
 
 interface NoteRepository {
     fun getNotesStream(): Flow<List<Note>>
-    suspend fun createNote(note: NoteDb)
+    suspend fun createNote(note: NoteDb) : String
     suspend fun getNoteById(id: String) : Note?
     suspend fun getNoteWithTagsById(id: String) : NoteWithTags?
     suspend fun updateNote(note: NoteDb)
     fun getNotesWithTagsStream(): Flow<List<NoteWithTags>>
+    suspend fun deleteNote(note: NoteDb)
 }
 
 class NoteRepositoryImpl @Inject constructor(
@@ -44,13 +45,19 @@ class NoteRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun createNote(note: NoteDb) {
+    override suspend fun deleteNote(note: NoteDb) {
+        noteDao.deleteNote(note)
+    }
+
+    override suspend fun createNote(note: NoteDb) : String {
 
         val noteId = withContext(dispatcher) {
             UUID.randomUUID().toString()
         }
 
         noteDao.upsertNote(note.copy(noteId = noteId))
+
+        return noteId
     }
 
     override suspend fun getNoteById(id: String) : Note? {

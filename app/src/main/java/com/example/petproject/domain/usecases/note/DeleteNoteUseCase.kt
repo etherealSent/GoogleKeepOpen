@@ -5,15 +5,15 @@ import com.example.petproject.domain.mappers.NoteToDbMapper
 import com.example.petproject.domain.repository.note.NoteRepository
 import javax.inject.Inject
 
-interface SaveNoteUseCase {
-    suspend fun saveNote(note: Note) : String
+interface DeleteNoteUseCase {
+    suspend fun deleteNote(note: Note)
 }
 
-class SaveNoteUseCaseImpl @Inject constructor(
+class DeleteNoteUseCaseImpl @Inject constructor(
     private val noteRepository: NoteRepository,
     private val noteToDbMapper: NoteToDbMapper = NoteToDbMapper()
-) : SaveNoteUseCase {
-    override suspend fun saveNote(note: Note) : String {
-        return noteRepository.createNote(noteToDbMapper(note))
+) : DeleteNoteUseCase {
+    override suspend fun deleteNote(note: Note) {
+        noteRepository.deleteNote(noteToDbMapper(note))
     }
 }

@@ -64,14 +64,17 @@ fun PetNavGraph(
             val sheetState = rememberModalBottomSheetState()
 
             EditNoteScreenWrapper(
-                onBack = { navController.popBackStack() },
+                onBack = { navActions.navigateToMainScreen() },
                 sheetState = sheetState,
                 coroutineScope = coroutineScope,
                 openCamera = {
                              noteId, noteTitle -> navActions.navigateToEditNoteCamera(noteId)
                     navController.currentBackStackEntry?.savedStateHandle?.set("noteTitle", noteTitle)
                              },
-                uri = uri
+                uri = uri,
+                navigateToCopiedNote = { id ->
+                    navActions.navigateToEditNote(id)
+                }
             )
         }
         composable(PetDestinations.EDIT_TAGS_ROUTE) {

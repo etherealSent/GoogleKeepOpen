@@ -78,13 +78,40 @@ class EditNoteViewModel @Inject constructor(
 
     private fun createNewNote() {
         viewModelScope.launch {
-            saveNoteUseCase.saveNote(
+           saveNoteUseCase.saveNote(
                 noteToDomainMapper(
                     _uiState.value.run {
-                        NoteUi(id = "", title, content, listOf(), pinned, lastUpdate, photoPaths)
+                        NoteUi(id = "", title, content, listOf(), pinned, lastUpdate, photoPaths, isArchived, isDeleted)
                     }
                 )
             )
+        }
+    }
+
+    fun deleteNote() {
+        _uiState.update {
+            it.copy(isDeleted = true)
+        }
+    }
+
+    fun archiveNote() {
+        _uiState.update {
+            it.copy(isArchived = true)
+        }
+    }
+
+    fun copyNote() {
+        viewModelScope.launch {
+            val id = saveNoteUseCase.saveNote(
+                noteToDomainMapper(
+                    _uiState.value.run {
+                        NoteUi(id = "", title, content, listOf(), pinned, lastUpdate, photoPaths, isArchived, isDeleted)
+                    }
+                )
+            )
+            _uiState.update {
+                it.copy(copiedId = id, showBottomSheet = false)
+            }
         }
     }
 
@@ -137,7 +164,9 @@ class EditNoteViewModel @Inject constructor(
                             content = content,
                             pinned = pinned,
                             lastUpdate = lastUpdate,
-                            photoPaths = photoPaths
+                            photoPaths = photoPaths,
+                            isArchived = isArchived,
+                            isDeleted = isDeleted
                         )
                     }
                 )
@@ -152,19 +181,6 @@ class EditNoteViewModel @Inject constructor(
             )
         }
     }
-
-//    fun formatLastUpdateTime(currentTime: Date) {
-//
-//        val timeDifference = Date(currentTime.time - uiState.value.lastUpdate.time)
-//        val formatter = SimpleDateFormat("HH:mm:ss")
-//        val formattedTime = formatter.format(timeDifference)
-//
-//        _uiState.update {
-//            it.copy(
-//                formattedDate = formattedTime
-//            )
-//        }
-//    }
 
     private fun loadNote(noteId: String) {
         _uiState.update {
@@ -181,7 +197,9 @@ class EditNoteViewModel @Inject constructor(
                             pinned = note.pinned,
                             isLoading = false,
                             lastUpdate = note.lastUpdate,
-                            photoPaths = note.photoPaths
+                            photoPaths = note.photoPaths,
+                            isArchived = note.isArchived,
+                            isDeleted = note.isDeleted
                         )
                     }
                     initState = EditNoteState(
@@ -191,7 +209,9 @@ class EditNoteViewModel @Inject constructor(
                         pinned = note.pinned,
                         isLoading = false,
                         lastUpdate = note.lastUpdate,
-                        photoPaths = note.photoPaths
+                        photoPaths = note.photoPaths,
+                        isArchived = note.isArchived,
+                        isDeleted = note.isDeleted
                     )
                 } else {
                     _uiState.update {

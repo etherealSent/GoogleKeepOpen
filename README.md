@@ -1,2 +1,1 @@
-# Pet Project for Android
-## Open-source копия Google Keep 
+# Open-source копия Google Keep 

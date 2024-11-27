@@ -53,6 +53,8 @@ import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.petproject.presentation.sharedUi.Note
+import com.example.petproject.presentation.sharedUi.Tag
 import kotlinx.coroutines.CoroutineScope
 
 @Composable
@@ -187,118 +189,6 @@ fun NotesCategoryName(
     }
 }
 
-@Composable
-fun Note(
-    modifier: Modifier = Modifier,
-    noteUi: NoteUi
-) {
-    BoxWithConstraints {
-        val parentWidth = maxWidth
-        Column(
-            modifier = modifier
-                .width(parentWidth)
-                .clip(RoundedCornerShape(5.dp))
-                .border(
-                    width = 1.dp,
-                    color = Color(0xFF40464A),
-                    shape = RoundedCornerShape(5.dp)
-                )
-                .padding(vertical = 8.dp, horizontal = 8.dp)
-        ) {
-            Text(
-                text = noteUi.title,
-                style = MaterialTheme.typography.titleMedium,
-                color = Color(0xFFDBE1E5)
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Text(
-                text = noteUi.content,
-                style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFFDBE1E5)
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            if (noteUi.tags.size != 0) {
-                // TODO: add tags
-                TagsLayout(tags = noteUi.tags, parentWidth + 32.dp)
-            }
-        }
-    }
-}
-
-@Composable
-fun TagsLayout(tags: List<TagUi>, parentWidth: Dp) {
-    // currentX and width
-    val lastPlaceableValues = remember {
-        mutableStateOf(Pair(0, 0))
-    }
-    var visibleTags by remember {
-        mutableStateOf(0)
-    }
-
-    var visibleWidth by remember {
-        mutableStateOf(mutableListOf(0))
-    }
-
-
-    SubcomposeLayout { constraints ->
-
-        var currentX = 0
-        var currentY= 0
-
-        val tagsMeasurement = tags.map { tag ->
-                subcompose(tag) { Tag(name = tag.name) }.first().measure(constraints)
-        }
-
-        // todo measure andMore tag
-
-        val height = tagsMeasurement[0].height
-
-        val tagsWidth = tagsMeasurement.map { it.width + 16.dp.roundToPx() }
-
-        for (tagWidth in tagsWidth) {
-            if (visibleWidth.sum() + tagWidth < parentWidth.roundToPx()) {
-                visibleTags++
-                visibleWidth.add(tagWidth)
-            } else {
-                break
-            }
-        }
-
-        var notVisibleTagsCount = tags.size - visibleTags
-
-        var andMoreTagMeasurement: Placeable? = null
-        
-        if (notVisibleTagsCount > 0) {
-            andMoreTagMeasurement = subcompose(0) { Tag(name = "and ${notVisibleTagsCount} more") }.first().measure(constraints)
-            val totalAMTMeasurement = andMoreTagMeasurement.width + 16.dp.roundToPx()
-            
-        }
-
-
-        val tagPlaceables = tagsMeasurement.take(visibleTags)
-
-        layout(constraints.maxWidth, height) {
-
-            tagPlaceables.forEachIndexed { index, placeable ->
-
-                placeable.placeRelative(currentX, currentY)
-                lastPlaceableValues.value = Pair(currentX, placeable.width)
-                currentX += placeable.width + 8.dp.roundToPx()
-            }
-
-            if (andMoreTagMeasurement != null) {
-                andMoreTagMeasurement.placeRelative(currentX, currentY)
-            }
-        }
-    }
-    Text(text = "$visibleTags, ${visibleWidth},${parentWidth}")
-}
-
-
 //@Composable
 //fun BottomBar(onFabClick: () -> Unit) {
 //    BottomAppBar(
@@ -309,25 +199,6 @@ fun TagsLayout(tags: List<TagUi>, parentWidth: Dp) {
 //    )
 //}
 
-@Composable
-fun Tag(
-    modifier: Modifier = Modifier,
-    name: String
-) {
-    Text(
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .border(
-                width = 1.dp,
-                color = Color(0xFF40464A),
-                shape = RoundedCornerShape(12.dp)
-            )
-            .background(Color(0xFF3D4548))
-            .padding(vertical = 4.dp, horizontal = 8.dp),
-        text = name,
-        color = Color(0xFFBAC0C7)
-    )
-}
 
 @Composable
 fun FAB(

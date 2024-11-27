@@ -1,5 +1,5 @@
 package com.example.petproject.presentation.main
 
 enum class MainScreenType {
-    Notes, ConcreteNote, Archive, Bucket
+    Notes, ByTag, Archive, Bucket, Reminder
 }

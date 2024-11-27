@@ -1,59 +1,55 @@
 package com.example.petproject.presentation.main
 
 import android.content.res.Configuration
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.DrawerState
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.petproject.R
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.petproject.presentation.model.NoteUi
 import com.example.petproject.presentation.model.TagUi
 import com.example.petproject.ui.theme.PetProjectTheme
-import androidx.compose.ui.layout.Placeable
-import androidx.compose.ui.unit.Dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.hilt.navigation.compose.hiltViewModel
+import kotlinx.coroutines.launch
+import com.example.petproject.R
+import kotlinx.coroutines.CoroutineScope
+
+data class NavigationItem(
+    val title: String,
+    val selectedIcon: ImageVector,
+    val unselectedIcon: ImageVector,
+    val badgeCount: Int = 0,
+    val tagId: String? = null
+)
+
+const val UP_NAVIGATION_ITEMS_SIZE = 2
 
 @Composable
 fun MainScreenWrapper(
@@ -61,397 +57,333 @@ fun MainScreenWrapper(
     onAddNote: () -> Unit,
     onNoteClick: (NoteUi) -> Unit,
     onEditTags : () -> Unit,
+    coroutineScope: CoroutineScope,
     viewModel: MainViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     MainNavigationDrawer(
         notes = state.notesWithTags,
-        tags = emptyList(),
+        tags = state.tags,
         onNoteClick = onNoteClick,
         onAddNote = onAddNote,
         drawerState = drawerState,
-        onEditTags = onEditTags
-
+        onEditTags = onEditTags,
+        mainScreenType = state.uiMainState.screenType,
+        changeScreenType = viewModel::changeScreenType,
+        coroutineScope = coroutineScope,
+        onHelpClicked = {},
+        onSettingsClicked = {},
+        selectedIndex = state.uiMainState.selectedIndex,
+        selectIndex = viewModel::selectNavDrawer,
+        selectedTagUi = state.uiMainState.selectedTagUi,
+        onTagUiSelected = viewModel::selectTag
     )
 }
 
-
 @Composable
-fun MainScreen(
+fun MainNavigationDrawer(
     notes: List<NoteUi>,
-    onNavigationIconClicked: () -> Unit,
     onAddNote: () -> Unit,
+    onEditTags : () -> Unit,
     onNoteClick: (NoteUi) -> Unit,
+    tags: List<TagUi>,
+    drawerState: DrawerState,
+    mainScreenType: MainScreenType,
+    changeScreenType: (MainScreenType) -> Unit,
+    selectedTagUi: TagUi,
+    selectIndex: (Int) -> Unit,
+    selectedIndex: Int,
+    coroutineScope: CoroutineScope,
+    onSettingsClicked: () -> Unit,
+    onHelpClicked: () -> Unit,
+    onTagUiSelected: (TagUi) -> Unit
 ) {
+    val upNavigationItems = listOf(
+        NavigationItem(
+            title = "Заметки",
+            selectedIcon = ImageVector.vectorResource(id = R.drawable.lightbulb_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+            unselectedIcon = ImageVector.vectorResource(id = R.drawable.lightbulb_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+            badgeCount = 0
+        ),
+        NavigationItem(
+            title = "Напоминания",
+            selectedIcon = ImageVector.vectorResource(id = R.drawable.notifications_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+            unselectedIcon = ImageVector.vectorResource(id = R.drawable.notifications_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+            badgeCount = 1
+        )
+    )
 
-    Scaffold(
-        floatingActionButton = { FAB(onAddNote) },
-        topBar = {
-        }
-    ) { innerPadding ->
-        Box(modifier = Modifier.padding(innerPadding)) {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp)
-            ) {
-                item {
-                    Spacer(modifier = Modifier.height(18.dp))
+    val tagNavigationItems = tags.mapIndexed { index, tag ->
+        NavigationItem(
+            title = tag.name,
+            selectedIcon = ImageVector.vectorResource(id = R.drawable.label_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+            unselectedIcon = ImageVector.vectorResource(id = R.drawable.label_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+            badgeCount = UP_NAVIGATION_ITEMS_SIZE - 1 + index,
+            tagId = tag.id
+        )
+    }
+
+
+    val bottomItems = listOf(
+        NavigationItem(
+            title = "Архив",
+            selectedIcon = ImageVector.vectorResource(id = R.drawable.archive_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+            unselectedIcon = ImageVector.vectorResource(id = R.drawable.archive_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+            badgeCount = UP_NAVIGATION_ITEMS_SIZE + tags.size
+        ),
+        NavigationItem(
+            title = "Корзина",
+            selectedIcon = ImageVector.vectorResource(id = R.drawable.delete_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+            unselectedIcon = ImageVector.vectorResource(id = R.drawable.delete_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+            badgeCount = UP_NAVIGATION_ITEMS_SIZE + tags.size + 1
+        ),
+        NavigationItem(
+            title = "Настройки",
+            selectedIcon = ImageVector.vectorResource(id = R.drawable.settings_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+            unselectedIcon = ImageVector.vectorResource(id = R.drawable.settings_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+            badgeCount = UP_NAVIGATION_ITEMS_SIZE + tags.size + 2
+        ),
+        NavigationItem(
+            title = "Справка/отзыв",
+            selectedIcon = ImageVector.vectorResource(id = R.drawable.help_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+            unselectedIcon = ImageVector.vectorResource(id = R.drawable.help_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+            badgeCount = UP_NAVIGATION_ITEMS_SIZE + tags.size + 3
+        ),
+    )
+
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                val width = (maxWidth * 8) / 10
+                ModalDrawerSheet(modifier = Modifier.width(width)) {
+                    Text(
+                        modifier = Modifier.padding(16.dp),
+                        text = "Google Keep",
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    NavigationDrawerItem(
+                        label = { Text(text = upNavigationItems[0].title) },
+                        selected = (selectedIndex == upNavigationItems[0].badgeCount),
+                        onClick = {
+                            selectIndex(upNavigationItems[0].badgeCount)
+                            coroutineScope.launch {
+                                drawerState.close()
+                            }
+                            changeScreenType(MainScreenType.Notes)
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = if (selectedIndex == upNavigationItems[0].badgeCount) {
+                                    upNavigationItems[0].selectedIcon
+                                } else upNavigationItems[0].unselectedIcon,
+                                contentDescription = upNavigationItems[0].title
+                            )
+                        },
+                        modifier = Modifier
+                            .padding(NavigationDrawerItemDefaults.ItemPadding)
+                    )
+
+                    NavigationDrawerItem(
+                        label = { Text(text = upNavigationItems[1].title) },
+                        selected = (selectedIndex == upNavigationItems[1].badgeCount),
+                        onClick = {
+                            selectIndex(upNavigationItems[1].badgeCount)
+                            coroutineScope.launch {
+                                drawerState.close()
+                            }
+                            changeScreenType(MainScreenType.Reminder)
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = if (selectedIndex == upNavigationItems[1].badgeCount) {
+                                    upNavigationItems[1].selectedIcon
+                                } else upNavigationItems[1].unselectedIcon,
+                                contentDescription = upNavigationItems[1].title
+                            )
+                        },
+                        modifier = Modifier
+                            .padding(NavigationDrawerItemDefaults.ItemPadding)
+                    )
+
+                    HorizontalDivider(modifier = Modifier.padding(top = 15.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 10.dp)
+                        ,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        NavigationDrawerTextButton(text = "Ярлыки", onClick = {})
+                        NavigationDrawerTextButton(text = "Изменить", onClick = onEditTags)
+                    }
+
+                    tagNavigationItems.forEach {
+                        NavigationDrawerItem(
+                            label = { Text(text = it.title) },
+                            selected = (selectedIndex == it.badgeCount),
+                            onClick = {
+                                onTagUiSelected(
+                                    TagUi(
+                                        id = it.tagId ?: "",
+                                        name = it.title
+                                    )
+                                )
+                                selectIndex(it.badgeCount)
+                            },
+                            icon = { Icon(imageVector = ImageVector.vectorResource(id = R.drawable.label_24dp_e8eaed_fill0_wght400_grad0_opsz24), contentDescription = "Tag ${it.title}")},
+                            modifier = Modifier
+                                .padding(NavigationDrawerItemDefaults.ItemPadding)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.weight(1f))
+                    HorizontalDivider(Modifier.padding(vertical = 10.dp))
+
+                    NavigationDrawerItem(
+                        label = { Text(text = "Создать ярлык") },
+                        selected = false,
+                        onClick = {
+                            onEditTags()
+                            coroutineScope.launch {
+                                drawerState.close()
+                            }
+                        },
+                        icon = { Icon(imageVector = Icons.Default.Add, contentDescription = "Create Tag")},
+                        modifier = Modifier
+                            .padding(NavigationDrawerItemDefaults.ItemPadding)
+                    )
+
+                    bottomItems.forEach {
+                        NavigationDrawerItem(
+                            label = { Text(text = it.title) },
+                            selected = (selectedIndex == it.badgeCount),
+                            onClick = {
+                                when(it.badgeCount) {
+                                    // archive
+                                    UP_NAVIGATION_ITEMS_SIZE + tags.size -> {
+                                        changeScreenType(MainScreenType.Archive)
+                                    }
+                                    // bucket
+                                    UP_NAVIGATION_ITEMS_SIZE + tags.size + 1 -> {
+                                        changeScreenType(MainScreenType.Bucket)
+                                    }
+                                    // settings
+                                    UP_NAVIGATION_ITEMS_SIZE + tags.size + 2 -> {
+                                        onSettingsClicked()
+                                    }
+
+                                    // help
+                                    UP_NAVIGATION_ITEMS_SIZE + tags.size + 3 -> {
+                                        onHelpClicked()
+                                    }
+
+                                    else -> {}
+                                }
+                                selectIndex(it.badgeCount)
+                                coroutineScope.launch {
+                                    drawerState.close()
+                                }
+                            },
+                            modifier = Modifier
+                                .padding(NavigationDrawerItemDefaults.ItemPadding)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(20.dp))
                 }
-
-                categoryNotesBlock(
-                    categoryName = "Закреплённые",
-                    noteUis = notes.filter { it.pinned },
-                    onNoteClick = onNoteClick
-                )
-
-                categoryNotesBlock(
-                    categoryName = "Другие",
-                    notes.filter { !it.pinned },
-                    onNoteClick = onNoteClick
-                )
             }
-            AnimatedVisibility(
-                visible = true,
-                enter = slideInVertically { fullHeight -> -fullHeight },
-                exit = slideOutVertically { fullHeight -> -fullHeight }
-            ) {
-                SearchBar(modifier = Modifier
-                    .background(Color.Transparent.copy(0.1f))
-                    .padding(start = 20.dp, end = 20.dp, top = 12.dp),
-                    onNavigationIconClicked = onNavigationIconClicked
-                )
-            }
-        }
-    }
-}
-
-inline fun LazyListScope.categoryNotesBlock(categoryName: String = "", noteUis: List<NoteUi>, crossinline onNoteClick: (NoteUi) -> Unit) {
-    if (noteUis.isNotEmpty()) {
-        item {
-            NotesCategoryName(
-                name = categoryName, modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp, top = 52.dp)
-            )
-        }
-    }
-    items(noteUis) { note ->
-        Note(modifier = Modifier
-            .padding(bottom = 8.dp)
-            .clickable { onNoteClick(note) },note)
-    }
-}
-
-@Composable
-fun SearchBar(
-    modifier: Modifier = Modifier,
-    onNavigationIconClicked: () -> Unit
-) {
-    Row(modifier = modifier
-        .fillMaxWidth()
-        .clip(RoundedCornerShape(50))
-        .background(Color(0xFF142229))
-        .padding(vertical = 1.dp),
-        verticalAlignment = Alignment.CenterVertically
+        },
+        gesturesEnabled = true
     ) {
-        IconButton(onClick = onNavigationIconClicked) {
-            Icon(tint = Color(0xFFC0CBD1),
-                imageVector = ImageVector.vectorResource(id = R.drawable.menu_24dp_e8eaed_fill0_wght400_grad0_opsz24),
-                contentDescription = "open side-bar"
-            )
-        }
-
-        Text(text = "Искать в заметках", color = Color(0xFFC0CBD1))
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        IconButton(onClick = { /*TODO*/ }) {
-            Icon(tint = Color(0xFFC0CBD1),
-                imageVector = ImageVector.vectorResource(id = R.drawable.splitscreen_24dp_e8eaed_fill0_wght400_grad0_opsz24),
-                contentDescription = "change note display type"
-            )
-
-        }
-
-        IconButton(onClick = { /*TODO*/ }) {
-            Icon(tint = Color(0xFFC0CBD1),
-                imageVector = ImageVector.vectorResource(id = R.drawable.account_circle_24dp_e8eaed_fill0_wght400_grad0_opsz24),
-                contentDescription = "google profiles"
-            )
-
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ConcreteTopAppBar(
-    title: String,
-    onNavigationIconClicked: () -> Unit
-) {
-    TopAppBar(
-        title = { Text(text = title) },
-        navigationIcon = {
-            IconButton(onClick = onNavigationIconClicked) {
-                Icon(imageVector = ImageVector.vectorResource(id = R.drawable.menu_24dp_e8eaed_fill0_wght400_grad0_opsz24), contentDescription = "openMenu")
-            }
-        }
-    )
-}
-
-@Composable
-fun NotesCategoryName(
-    modifier: Modifier,
-    name: String
-) {
-    Box(modifier = modifier) {
-        Text(text = name)
-    }
-}
-
-@Composable
-fun Note(
-    modifier: Modifier = Modifier,
-    noteUi: NoteUi
-) {
-    BoxWithConstraints {
-        val parentWidth = maxWidth
-        Column(
-            modifier = modifier
-                .width(parentWidth)
-                .clip(RoundedCornerShape(5.dp))
-                .border(
-                    width = 1.dp,
-                    color = Color(0xFF40464A),
-                    shape = RoundedCornerShape(5.dp)
+        when(mainScreenType) {
+            MainScreenType.Notes -> {
+                NotesScreen(
+                    notes = notes.filter { !it.isArchived && !it.isDeleted },
+                    onAddNote = onAddNote,
+                    onNoteClick = onNoteClick,
+                    onNavigationIconClicked = {
+                        coroutineScope.launch {
+                            drawerState.apply {
+                                if (isClosed) open() else close()
+                            }
+                        }
+                    }
                 )
-                .padding(vertical = 8.dp, horizontal = 8.dp)
-        ) {
-            Text(
-                text = noteUi.title,
-                style = MaterialTheme.typography.titleMedium,
-                color = Color(0xFFDBE1E5)
-            )
+            }
+            MainScreenType.ByTag -> {
+                NotesByTagScreen(
+                    onNavigationIconClicked = {
+                        coroutineScope.launch {
+                            drawerState.apply {
+                                if (isClosed) open() else close()
+                            }
+                        }
+                    },
+                    onFABClicked = onAddNote,
+                    notes = notes.filter { it.tags.contains(selectedTagUi) },
+                    onNoteClicked = onNoteClick,
+                    tagUi = selectedTagUi
+                )
+            }
+            MainScreenType.Bucket -> {
+                BucketScreen(
+                    onNavigationIconClicked = { /*TODO*/ },
+                    onFABClicked = { /*TODO*/ },
+                    onNoteClicked = {},
+                    notes = notes.filter { it.isDeleted }
+                )
+            }
+            MainScreenType.Archive -> {
 
-            Spacer(modifier = Modifier.height(10.dp))
+            }
+            MainScreenType.Reminder -> {
 
-            Text(
-                text = noteUi.content,
-                style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFFDBE1E5)
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            if (noteUi.tags.size != 0) {
-                // TODO: add tags
-                TagsLayout(tags = noteUi.tags, parentWidth + 32.dp)
             }
         }
     }
 }
 
 @Composable
-fun TagsLayout(tags: List<TagUi>, parentWidth: Dp) {
-    // currentX and width
-    val lastPlaceableValues = remember {
-        mutableStateOf(Pair(0, 0))
-    }
-    var visibleTags by remember {
-        mutableStateOf(0)
-    }
-
-    var visibleWidth by remember {
-        mutableStateOf(mutableListOf(0))
-    }
-
-
-    SubcomposeLayout { constraints ->
-
-        var currentX = 0
-        var currentY= 0
-
-        val tagsMeasurement = tags.map { tag ->
-                subcompose(tag) { Tag(name = tag.name) }.first().measure(constraints)
-        }
-
-        // todo measure andMore tag
-
-        val height = tagsMeasurement[0].height
-
-        val tagsWidth = tagsMeasurement.map { it.width + 16.dp.roundToPx() }
-
-        for (tagWidth in tagsWidth) {
-            if (visibleWidth.sum() + tagWidth < parentWidth.roundToPx()) {
-                visibleTags++
-                visibleWidth.add(tagWidth)
-            } else {
-                break
-            }
-        }
-
-        var notVisibleTagsCount = tags.size - visibleTags
-
-        var andMoreTagMeasurement: Placeable? = null
-        
-        if (notVisibleTagsCount > 0) {
-            andMoreTagMeasurement = subcompose(0) { Tag(name = "and ${notVisibleTagsCount} more") }.first().measure(constraints)
-            val totalAMTMeasurement = andMoreTagMeasurement.width + 16.dp.roundToPx()
-            
-        }
-
-
-        val tagPlaceables = tagsMeasurement.take(visibleTags)
-
-        layout(constraints.maxWidth, height) {
-
-            tagPlaceables.forEachIndexed { index, placeable ->
-
-                placeable.placeRelative(currentX, currentY)
-                lastPlaceableValues.value = Pair(currentX, placeable.width)
-                currentX += placeable.width + 8.dp.roundToPx()
-            }
-
-            if (andMoreTagMeasurement != null) {
-                andMoreTagMeasurement.placeRelative(currentX, currentY)
-            }
-        }
-    }
-    Text(text = "$visibleTags, ${visibleWidth},${parentWidth}")
-}
-
-
-//@Composable
-//fun BottomBar(onFabClick: () -> Unit) {
-//    BottomAppBar(
-//        floatingActionButton = { FAB(onFabClick) },
-//        actions = {},
-//        containerColor = Color.Transparent,
-//        contentColor = Color.Transparent
-//    )
-//}
-
-@Composable
-fun Tag(
-    modifier: Modifier = Modifier,
-    name: String
-) {
-    Text(
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .border(
-                width = 1.dp,
-                color = Color(0xFF40464A),
-                shape = RoundedCornerShape(12.dp)
-            )
-            .background(Color(0xFF3D4548))
-            .padding(vertical = 4.dp, horizontal = 8.dp),
-        text = name,
-        color = Color(0xFFBAC0C7)
-    )
-}
-
-@Composable
-fun FAB(
+fun NavigationDrawerTextButton(
+    text: String,
     onClick: () -> Unit
 ) {
-    FloatingActionButton(onClick = onClick) {
-        Icon(imageVector = Icons.Default.Add, contentDescription = "create note")
-    }
-}
-
-@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
-@Composable
-fun SearchBarPreview() {
-    PetProjectTheme {
-        SearchBar(onNavigationIconClicked = {})
-    }
-}
-
-
-//@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
-//@Composable
-//fun BottomBarPreview() {
-//    PetProjectTheme {
-//        BottomBar({})
-//    }
-//}
-
-@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
-@Composable
-fun FABPreview() {
-    PetProjectTheme {
-        FAB({})
-    }
-}
-
-@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
-@Composable
-fun NotePreview() {
-    PetProjectTheme {
-        Note(
-            noteUi = NoteUi(
-                title = "title",
-                content = "content",
-                tags = listOf(
-                    TagUi(name = "taddk,d"),
-                    TagUi(name ="taxxxg"),
-                    TagUi(name ="tagmoment"),
-                    TagUi(name ="bbb"),
-                    TagUi(name ="aab")
-                ),
-                pinned = false
-            )
+    Box {
+        Text(
+            modifier = Modifier
+                .clickable { onClick() }
+                .padding(vertical = 10.dp, horizontal = 5.dp)
+            , text = text
         )
     }
 }
 
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
-fun TagPreview() {
+fun MainNavigationDrawerPreview() {
     PetProjectTheme {
-        Tag(name = "hah")
-    }
-}
-
-@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
-@Composable
-fun MainScreenPreview() {
-    PetProjectTheme {
-        MainScreen(
-            notes = listOf(
-                NoteUi( title = "a", content = "bc",
-                    tags = listOf(
-                        TagUi(name = "taddk,d"),
-                        TagUi( name = "taxxxg"),
-                        TagUi( name = "tagmoment"),
-                        TagUi( name = "bbb"),
-                        TagUi( name="aab")
-                    ), pinned = true),
-                NoteUi( title = "a", content = "bc",
-                    tags = listOf(
-                        TagUi(name = "taddk,d"),
-                        TagUi( name = "taxxxg"),
-                        TagUi( name = "tagmoment"),
-                        TagUi( name = "bbb"),
-                        TagUi( name="aab")
-                    ), pinned = true),
-                NoteUi( title = "a", content = "bc",
-                    tags = listOf(
-                        TagUi(name = "taddk,d"),
-                        TagUi( name = "taxxxg"),
-                        TagUi( name = "tagmoment"),
-                        TagUi( name = "bbb"),
-                        TagUi( name="aab")
-                    ), pinned = true),
-                NoteUi(title = "d", content = "bsxac", tags = listOf(), pinned = true),
-                NoteUi(title = "d", content = "bsxac", tags = listOf(), pinned = true),
-                NoteUi(title = "d", content = "bsxac", tags = listOf(), pinned = true),
-                NoteUi(title = "d", content = "bsxac", tags = listOf(), pinned = true),
-                NoteUi(title = "d", content = "bsxac", tags = listOf(), pinned = true),
-
-
-            ), onNavigationIconClicked = {}, onAddNote = {}, onNoteClick = {}
+        MainNavigationDrawer(
+            notes = emptyList(),
+            onAddNote = {},
+            onNoteClick = {},
+            tags = listOf(
+                TagUi(name = "ha"),
+                TagUi(name = "wa")
+            ),
+            drawerState = rememberDrawerState(initialValue = DrawerValue.Closed),
+            onEditTags = {},
+            mainScreenType = MainScreenType.ByTag,
+            changeScreenType = {},
+            selectedTagUi = TagUi(),
+            coroutineScope = rememberCoroutineScope(),
+            onSettingsClicked = {},
+            onHelpClicked = {},
+            selectedIndex = 0,
+            selectIndex = {},
+            onTagUiSelected = {}
         )
     }
 }

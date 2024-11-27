@@ -49,7 +49,8 @@ fun PetNavGraph(
                 drawerState = drawerState,
                 onNoteClick = { noteUi -> navActions.navigateToEditNote(noteUi.id) },
                 onAddNote = { navActions.navigateToEditNote(null)},
-                onEditTags = {navActions.navigateToEditTags()}
+                onEditTags = {navActions.navigateToEditTags()},
+                coroutineScope = coroutineScope
             )
         }
         composable(

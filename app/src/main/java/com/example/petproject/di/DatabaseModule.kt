@@ -40,4 +40,5 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideTagDao(db: AppDatabase): TagDao = db.tagDao()
+
 }

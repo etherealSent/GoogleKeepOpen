@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -19,6 +20,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridScope
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -53,6 +58,7 @@ import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.petproject.presentation.sharedUi.FAB
 import com.example.petproject.presentation.sharedUi.Note
 import com.example.petproject.presentation.sharedUi.Tag
 import kotlinx.coroutines.CoroutineScope
@@ -63,31 +69,55 @@ fun NotesScreen(
     onNavigationIconClicked: () -> Unit,
     onAddNote: () -> Unit,
     onNoteClick: (NoteUi) -> Unit,
+    notesViewType: NotesViewType
 ) {
-
     Scaffold(
         floatingActionButton = { FAB(onAddNote) },
         topBar = {
         }
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp)
-            ) {
+            when (notesViewType) {
+                NotesViewType.Column -> {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp)
+                    ) {
+                        categoryNotesBlock(
+                            categoryName = "Закреплённые",
+                            noteUis = notes.filter { it.pinned },
+                            onNoteClick = onNoteClick,
+                        )
 
-                categoryNotesBlock(
-                    categoryName = "Закреплённые",
-                    noteUis = notes.filter { it.pinned },
-                    onNoteClick = onNoteClick
-                )
+                        categoryNotesBlock(
+                            categoryName = "Другие",
+                            notes.filter { !it.pinned },
+                            onNoteClick = onNoteClick,
+                        )
+                    }
+                }
+                NotesViewType.Grid -> {
+                    LazyVerticalStaggeredGrid(
+                        columns = StaggeredGridCells.Fixed(2),
+                        content = {
+                            categoryNotesBlock(
+                                categoryName = "Закреплённые",
+                                noteUis = notes.filter { it.pinned },
+                                onNoteClick = onNoteClick,
+                            )
 
-                categoryNotesBlock(
-                    categoryName = "Другие",
-                    notes.filter { !it.pinned },
-                    onNoteClick = onNoteClick
-                )
+                            categoryNotesBlock(
+                                categoryName = "Другие",
+                                notes.filter { !it.pinned },
+                                onNoteClick = onNoteClick,
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 8.dp)
+                    )
+                }
             }
             AnimatedVisibility(
                 visible = true,
@@ -97,7 +127,8 @@ fun NotesScreen(
                 SearchBar(modifier = Modifier
                     .background(Color.Transparent.copy(0.1f))
                     .padding(start = 20.dp, end = 20.dp, top = 12.dp),
-                    onNavigationIconClicked = onNavigationIconClicked
+                    onNavigationIconClicked = onNavigationIconClicked,
+                    notesViewType = notesViewType
                 )
             }
         }
@@ -122,10 +153,30 @@ inline fun LazyListScope.categoryNotesBlock(categoryName: String = "", noteUis: 
     }
 }
 
+inline fun LazyStaggeredGridScope.categoryNotesBlock(categoryName: String = "", noteUis: List<NoteUi>, crossinline onNoteClick: (NoteUi) -> Unit) {
+    if (noteUis.isNotEmpty()) {
+        item {
+            Spacer(modifier = Modifier.height(18.dp))
+        }
+        item {
+            NotesCategoryName(
+                name = categoryName, modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp, top = 52.dp)
+            )
+        }
+    }
+    items(noteUis) { note ->
+        Note(modifier = Modifier
+            .padding(bottom = 8.dp)
+            .clickable { onNoteClick(note) },note)
+    }
+}
+
+
 @Composable
 fun SearchBar(
     modifier: Modifier = Modifier,
-    onNavigationIconClicked: () -> Unit
+    onNavigationIconClicked: () -> Unit,
+    notesViewType: NotesViewType
 ) {
     Row(modifier = modifier
         .fillMaxWidth()
@@ -145,12 +196,23 @@ fun SearchBar(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        IconButton(onClick = { /*TODO*/ }) {
-            Icon(tint = Color(0xFFC0CBD1),
-                imageVector = ImageVector.vectorResource(id = R.drawable.splitscreen_24dp_e8eaed_fill0_wght400_grad0_opsz24),
-                contentDescription = "change note display type"
-            )
-
+        when(notesViewType) {
+            NotesViewType.Column -> {
+                IconButton(onClick = { /*TODO*/ }) {
+                    Icon(tint = Color(0xFFC0CBD1),
+                        imageVector = ImageVector.vectorResource(id = R.drawable.splitscreen_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+                        contentDescription = "change note display type"
+                    )
+                } 
+            }
+            NotesViewType.Grid -> {
+                IconButton(onClick = { /*TODO*/ }) {
+                    Icon(tint = Color(0xFFC0CBD1),
+                        imageVector = ImageVector.vectorResource(id = R.drawable.grid_view_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+                        contentDescription = "change note display type"
+                    )
+                }
+            }
         }
 
         IconButton(onClick = { /*TODO*/ }) {
@@ -189,42 +251,14 @@ fun NotesCategoryName(
     }
 }
 
-//@Composable
-//fun BottomBar(onFabClick: () -> Unit) {
-//    BottomAppBar(
-//        floatingActionButton = { FAB(onFabClick) },
-//        actions = {},
-//        containerColor = Color.Transparent,
-//        contentColor = Color.Transparent
-//    )
-//}
-
-
-@Composable
-fun FAB(
-    onClick: () -> Unit
-) {
-    FloatingActionButton(onClick = onClick) {
-        Icon(imageVector = Icons.Default.Add, contentDescription = "create note")
-    }
-}
-
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun SearchBarPreview() {
     PetProjectTheme {
-        SearchBar(onNavigationIconClicked = {})
+        SearchBar(onNavigationIconClicked = {}, notesViewType = NotesViewType.Column)
     }
 }
 
-
-//@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
-//@Composable
-//fun BottomBarPreview() {
-//    PetProjectTheme {
-//        BottomBar({})
-//    }
-//}
 
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
@@ -300,7 +334,7 @@ fun MainScreenPreview() {
                 NoteUi(title = "d", content = "bsxac", tags = listOf(), pinned = true),
 
 
-            ), onNavigationIconClicked = {}, onAddNote = {}, onNoteClick = {}
+            ), onNavigationIconClicked = {}, onAddNote = {}, onNoteClick = {}, notesViewType = NotesViewType.Column
         )
     }
 }

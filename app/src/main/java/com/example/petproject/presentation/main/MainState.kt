@@ -13,5 +13,10 @@ data class MainState(
 data class UiMainState(
     val screenType: MainScreenType = MainScreenType.Notes,
     val selectedTagUi: TagUi = TagUi(),
-    val selectedIndex: Int = -1
+    val selectedIndex: Int = -1,
+    val notesViewType: NotesViewType = NotesViewType.Column
 )
+
+enum class NotesViewType {
+    Grid, Column
+}

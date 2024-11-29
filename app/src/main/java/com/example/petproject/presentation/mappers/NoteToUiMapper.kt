@@ -15,7 +15,8 @@ class NoteToUiMapper @Inject constructor() : (Note) -> NoteUi {
             lastUpdate = note.lastUpdate,
             photoPaths = note.photoPaths,
             isArchived = note.isArchived,
-            isDeleted = note.isDeleted
+            isDeleted = note.isDeleted,
+            position = note.position
         )
     }
 }

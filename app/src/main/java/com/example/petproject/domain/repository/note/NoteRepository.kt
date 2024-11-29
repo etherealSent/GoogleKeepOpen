@@ -27,6 +27,8 @@ interface NoteRepository {
     suspend fun updateNote(note: NoteDb)
     fun getNotesWithTagsStream(): Flow<List<NoteWithTags>>
     suspend fun deleteNote(note: NoteDb)
+    suspend fun getPinnedNotesSize(): Int
+    suspend fun getOtherNotesSize(): Int
 }
 
 class NoteRepositoryImpl @Inject constructor(
@@ -47,6 +49,14 @@ class NoteRepositoryImpl @Inject constructor(
 
     override suspend fun deleteNote(note: NoteDb) {
         noteDao.deleteNote(note)
+    }
+
+    override suspend fun getPinnedNotesSize(): Int {
+        return noteDao.getPinnedNotesSize()
+    }
+
+    override suspend fun getOtherNotesSize(): Int {
+        return noteDao.getOtherNotesSize()
     }
 
     override suspend fun createNote(note: NoteDb) : String {

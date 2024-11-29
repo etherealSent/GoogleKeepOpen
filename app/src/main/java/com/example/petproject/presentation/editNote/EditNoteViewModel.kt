@@ -9,6 +9,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.petproject.domain.entities.note.Note
+import com.example.petproject.domain.usecases.note.GetAmountOfOtherNotesUseCase
+import com.example.petproject.domain.usecases.note.GetAmountOfPinnedNotesUseCase
 import com.example.petproject.domain.usecases.note.GetNoteByIdUseCase
 import com.example.petproject.domain.usecases.note.SaveNoteUseCase
 import com.example.petproject.domain.usecases.note.UpdateNoteUseCase
@@ -30,6 +32,8 @@ class EditNoteViewModel @Inject constructor(
     private val getNoteByIdUseCase: GetNoteByIdUseCase,
     private val updateNoteUseCase: UpdateNoteUseCase,
     private val saveNoteUseCase: SaveNoteUseCase,
+    private val getAmountOfPinnedNotesUseCase: GetAmountOfPinnedNotesUseCase,
+    private val getAmountOfOtherNotesUseCase: GetAmountOfOtherNotesUseCase,
     private val noteToDomainMapper: NoteToDomainMapper = NoteToDomainMapper(),
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -78,13 +82,30 @@ class EditNoteViewModel @Inject constructor(
 
     private fun createNewNote() {
         viewModelScope.launch {
+
+            val gotInListPosition = if (_uiState.value.pinned) {
+                getAmountOfPinnedNotesUseCase.getAmountOfPinnedNotes()
+            } else getAmountOfOtherNotesUseCase.getAmountOfOtherNotes()
+
            saveNoteUseCase.saveNote(
                 noteToDomainMapper(
                     _uiState.value.run {
-                        NoteUi(id = "", title, content, listOf(), pinned, lastUpdate, photoPaths, isArchived, isDeleted)
+                        NoteUi(
+                            id = "",
+                            title,
+                            content,
+                            listOf(),
+                            pinned,
+                            lastUpdate,
+                            photoPaths,
+                            isArchived,
+                            isDeleted,
+                            gotInListPosition + 1
+                        )
                     }
                 )
             )
+
         }
     }
 

@@ -118,3 +118,6 @@ class MainViewModel @Inject constructor(
         }
     }
 }
+
+// all fixed
+// new gets new pos

@@ -77,7 +77,9 @@ fun MainScreenWrapper(
         selectedIndex = state.uiMainState.selectedIndex,
         selectIndex = viewModel::selectNavDrawer,
         selectedTagUi = state.uiMainState.selectedTagUi,
-        onTagUiSelected = viewModel::selectTag
+        onTagUiSelected = viewModel::selectTag,
+        notesViewType = state.uiMainState.notesViewType,
+        changeNotesViewType = viewModel::changeNotesViewType
     )
 }
 
@@ -97,7 +99,9 @@ fun MainNavigationDrawer(
     coroutineScope: CoroutineScope,
     onSettingsClicked: () -> Unit,
     onHelpClicked: () -> Unit,
-    onTagUiSelected: (TagUi) -> Unit
+    onTagUiSelected: (TagUi) -> Unit,
+    notesViewType: NotesViewType,
+    changeNotesViewType: () -> Unit
 ) {
     val upNavigationItems = listOf(
         NavigationItem(
@@ -310,7 +314,9 @@ fun MainNavigationDrawer(
                                 if (isClosed) open() else close()
                             }
                         }
-                    }
+                    },
+                    notesViewType = notesViewType,
+                    changeNotesViewType = changeNotesViewType
                 )
             }
             MainScreenType.ByTag -> {
@@ -383,7 +389,9 @@ fun MainNavigationDrawerPreview() {
             onHelpClicked = {},
             selectedIndex = 0,
             selectIndex = {},
-            onTagUiSelected = {}
+            onTagUiSelected = {},
+            notesViewType = NotesViewType.Column,
+            changeNotesViewType = {}
         )
     }
 }

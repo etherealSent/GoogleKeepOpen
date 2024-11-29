@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.petproject.R
 import kotlinx.coroutines.CoroutineScope
 
@@ -28,17 +29,18 @@ fun TooltipIconButton(
     tooltipText: String,
     iconContentDescription: String,
     iconResource: Int,
-    tooltipModifier: Modifier = Modifier
+    tooltipModifier: Modifier = Modifier,
+    onClick: () -> Unit
 ) {
     val tooltipState = rememberTooltipState()
     TooltipBox(
         positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
         tooltip = {
-            PlainTooltip(modifier = tooltipModifier) { Text(text = tooltipText) }
+            PlainTooltip(modifier = tooltipModifier) { Text(text = tooltipText, fontSize = 14.sp, modifier = Modifier.padding(4.dp)) }
                   },
         state = tooltipState
     ) {
-        IconButton(onClick = { /*TODO*/ }) {
+        IconButton(onClick = onClick) {
             Icon(imageVector = ImageVector.vectorResource(id = iconResource), contentDescription = iconContentDescription)
         }
     }
@@ -53,7 +55,8 @@ fun TooltipIconButtonPreview() {
                 tooltipText = "Один столбец",
                 iconContentDescription = "Один столбец",
                 iconResource = R.drawable.splitscreen_24dp_e8eaed_fill0_wght400_grad0_opsz24,
-                tooltipModifier = Modifier.padding(start = 60.dp)
+                tooltipModifier = Modifier.padding(start = 60.dp),
+                onClick = {}
             )
         }
     }

@@ -65,14 +65,12 @@ fun NotesByTagScreen(
                 }
 
                 categoryNotesBlock(
-                    categoryName = "Закреплённые",
                     noteUis = notes.filter { it.pinned },
                     onNoteClick = onNoteClicked
                 )
 
                 categoryNotesBlock(
-                    categoryName = "Другие",
-                    notes.filter { !it.pinned },
+                    noteUis = notes.filter { !it.pinned },
                     onNoteClick = onNoteClicked
                 )
             }

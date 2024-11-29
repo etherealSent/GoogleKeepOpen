@@ -7,6 +7,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -56,11 +57,13 @@ import com.example.petproject.presentation.model.TagUi
 import com.example.petproject.ui.theme.PetProjectTheme
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.petproject.presentation.sharedUi.FAB
 import com.example.petproject.presentation.sharedUi.Note
 import com.example.petproject.presentation.sharedUi.Tag
+import com.example.petproject.presentation.sharedUi.TooltipIconButton
 import kotlinx.coroutines.CoroutineScope
 
 @Composable
@@ -76,6 +79,9 @@ fun NotesScreen(
         floatingActionButton = { FAB(onAddNote) }
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
+            val pinnedNotes = notes.filter { it.pinned }
+            val otherNotes = notes.filter { !it.pinned }
+
             when (notesViewType) {
                 NotesViewType.Column -> {
                     LazyColumn(
@@ -83,39 +89,113 @@ fun NotesScreen(
                             .fillMaxWidth()
                             .padding(horizontal = 8.dp)
                     ) {
-                        categoryNotesBlock(
-                            categoryName = "Закреплённые",
-                            noteUis = notes.filter { it.pinned },
-                            onNoteClick = onNoteClick,
-                        )
+                        if (pinnedNotes.isNotEmpty()) {
+                            item {
+                                NotesCategoryName(
+                                    name = "Закреплённые",
+                                    modifier = Modifier.padding(
+                                        start = 16.dp,
+                                        end = 16.dp,
+                                        bottom = 12.dp,
+                                        top = 76.dp
+                                    )
+                                )
+                            }
+                            categoryNotesBlock(
+                                noteUis = pinnedNotes,
+                                onNoteClick = onNoteClick,
+                            )
+                        }
 
-                        categoryNotesBlock(
-                            categoryName = "Другие",
-                            notes.filter { !it.pinned },
-                            onNoteClick = onNoteClick,
-                        )
+                        if (otherNotes.isNotEmpty() && pinnedNotes.isNotEmpty()) {
+                            item {
+                                NotesCategoryName(
+                                    name = "Другие",
+                                    modifier = Modifier.padding(
+                                        start = 16.dp,
+                                        end = 16.dp,
+                                        bottom = 12.dp,
+                                        top = 6.dp
+                                    )
+                                )
+                            }
+                            categoryNotesBlock(
+                                noteUis = otherNotes,
+                                onNoteClick = onNoteClick,
+                            )
+                        } else if (otherNotes.isNotEmpty()) {
+                            item {
+                                NotesCategoryName(
+                                    name = "Другие",
+                                    modifier = Modifier.padding(
+                                        start = 16.dp,
+                                        end = 16.dp,
+                                        bottom = 12.dp,
+                                        top = 76.dp
+                                    )
+                                )
+                            }
+                            categoryNotesBlock(
+                                noteUis = otherNotes,
+                                onNoteClick = onNoteClick,
+                            )
+                        }
                     }
                 }
                 NotesViewType.Grid -> {
-                    LazyVerticalStaggeredGrid(
-                        columns = StaggeredGridCells.Fixed(2),
-                        content = {
-                            categoryNotesBlock(
-                                categoryName = "Закреплённые",
-                                noteUis = notes.filter { it.pinned },
-                                onNoteClick = onNoteClick,
-                            )
+                    Column(Modifier.padding(horizontal = 8.dp)) {
+                        if (pinnedNotes.isNotEmpty()) {
+                            Column {
+                                NotesCategoryName(
+                                    name = "Закреплённые", modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp, top = 76.dp)
+                                )
+                                LazyVerticalStaggeredGrid(
+                                    columns = StaggeredGridCells.Fixed(2),
+                                    content = {
+                                        categoryNotesBlock(pinnedNotes, onNoteClick)
+                                    },
+                                    verticalItemSpacing = 8.dp,
+                                    horizontalArrangement =  Arrangement.spacedBy(8.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                )
+                            }
+                        }
 
-                            categoryNotesBlock(
-                                categoryName = "Другие",
-                                notes.filter { !it.pinned },
-                                onNoteClick = onNoteClick,
-                            )
-                        },
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 8.dp)
-                    )
+                        if (otherNotes.isNotEmpty() && pinnedNotes.isNotEmpty()) {
+                            Column {
+                                NotesCategoryName(
+                                    name = "Другие", modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp, top = 10.dp)
+                                )
+                                LazyVerticalStaggeredGrid(
+                                    columns = StaggeredGridCells.Fixed(2),
+                                    content = {
+                                        categoryNotesBlock(otherNotes, onNoteClick)
+                                    },
+                                    verticalItemSpacing = 8.dp,
+                                    horizontalArrangement =  Arrangement.spacedBy(8.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                )
+                            }
+                        } else if (otherNotes.isNotEmpty()) {
+                            Column {
+                                NotesCategoryName(
+                                    name = "Другие", modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp, top = 76.dp)
+                                )
+                                LazyVerticalStaggeredGrid(
+                                    columns = StaggeredGridCells.Fixed(2),
+                                    content = {
+                                        categoryNotesBlock(otherNotes, onNoteClick)
+                                    },
+                                    verticalItemSpacing = 8.dp,
+                                    horizontalArrangement =  Arrangement.spacedBy(8.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                )
+                            }
+                        }
+                    }
                 }
             }
             AnimatedVisibility(
@@ -135,17 +215,7 @@ fun NotesScreen(
     }
 }
 
-inline fun LazyListScope.categoryNotesBlock(categoryName: String = "", noteUis: List<NoteUi>, crossinline onNoteClick: (NoteUi) -> Unit) {
-    if (noteUis.isNotEmpty()) {
-        item {
-            Spacer(modifier = Modifier.height(18.dp))
-        }
-        item {
-            NotesCategoryName(
-                name = categoryName, modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp, top = 52.dp)
-            )
-        }
-    }
+inline fun LazyListScope.categoryNotesBlock(noteUis: List<NoteUi>, crossinline onNoteClick: (NoteUi) -> Unit) {
     items(noteUis) { note ->
         Note(modifier = Modifier
             .padding(bottom = 8.dp)
@@ -153,20 +223,9 @@ inline fun LazyListScope.categoryNotesBlock(categoryName: String = "", noteUis: 
     }
 }
 
-inline fun LazyStaggeredGridScope.categoryNotesBlock(categoryName: String = "", noteUis: List<NoteUi>, crossinline onNoteClick: (NoteUi) -> Unit) {
-    if (noteUis.isNotEmpty()) {
-        item {
-            Spacer(modifier = Modifier.height(18.dp))
-        }
-        item {
-            NotesCategoryName(
-                name = categoryName, modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp, top = 52.dp)
-            )
-        }
-    }
+inline fun LazyStaggeredGridScope.categoryNotesBlock(noteUis: List<NoteUi>, crossinline onNoteClick: (NoteUi) -> Unit) {
     items(noteUis) { note ->
         Note(modifier = Modifier
-            .padding(bottom = 8.dp)
             .clickable { onNoteClick(note) },note)
     }
 }
@@ -199,20 +258,22 @@ fun SearchBar(
 
         when(notesViewType) {
             NotesViewType.Column -> {
-                IconButton(onClick = changeNotesViewType) {
-                    Icon(tint = Color(0xFFC0CBD1),
-                        imageVector = ImageVector.vectorResource(id = R.drawable.splitscreen_24dp_e8eaed_fill0_wght400_grad0_opsz24),
-                        contentDescription = "change note display type"
-                    )
-                } 
+                TooltipIconButton(
+                    tooltipText = "Один столбец",
+                    iconContentDescription = "change note display type to one column",
+                    iconResource = R.drawable.splitscreen_24dp_e8eaed_fill0_wght400_grad0_opsz24,
+                    onClick = changeNotesViewType,
+                    tooltipModifier = Modifier.padding(top = 8.dp)
+                )
             }
             NotesViewType.Grid -> {
-                IconButton(onClick = changeNotesViewType) {
-                    Icon(tint = Color(0xFFC0CBD1),
-                        imageVector = ImageVector.vectorResource(id = R.drawable.grid_view_24dp_e8eaed_fill0_wght400_grad0_opsz24),
-                        contentDescription = "change note display type"
-                    )
-                }
+                TooltipIconButton(
+                    tooltipText = "Несколько столбцов",
+                    iconContentDescription = "change note display type to several columns",
+                    iconResource = R.drawable.grid_view_24dp_e8eaed_fill0_wght400_grad0_opsz24,
+                    onClick = changeNotesViewType,
+                    tooltipModifier = Modifier.padding(top = 8.dp)
+                )
             }
         }
 
@@ -248,7 +309,7 @@ fun NotesCategoryName(
     name: String
 ) {
     Box(modifier = modifier) {
-        Text(text = name)
+        Text(text = name, fontSize = 12.sp)
     }
 }
 

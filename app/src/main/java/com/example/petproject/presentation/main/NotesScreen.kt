@@ -69,12 +69,11 @@ fun NotesScreen(
     onNavigationIconClicked: () -> Unit,
     onAddNote: () -> Unit,
     onNoteClick: (NoteUi) -> Unit,
-    notesViewType: NotesViewType
+    notesViewType: NotesViewType,
+    changeNotesViewType: () -> Unit
 ) {
     Scaffold(
-        floatingActionButton = { FAB(onAddNote) },
-        topBar = {
-        }
+        floatingActionButton = { FAB(onAddNote) }
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
             when (notesViewType) {
@@ -128,7 +127,8 @@ fun NotesScreen(
                     .background(Color.Transparent.copy(0.1f))
                     .padding(start = 20.dp, end = 20.dp, top = 12.dp),
                     onNavigationIconClicked = onNavigationIconClicked,
-                    notesViewType = notesViewType
+                    notesViewType = notesViewType,
+                    changeNotesViewType = changeNotesViewType
                 )
             }
         }
@@ -176,7 +176,8 @@ inline fun LazyStaggeredGridScope.categoryNotesBlock(categoryName: String = "", 
 fun SearchBar(
     modifier: Modifier = Modifier,
     onNavigationIconClicked: () -> Unit,
-    notesViewType: NotesViewType
+    notesViewType: NotesViewType,
+    changeNotesViewType: () -> Unit
 ) {
     Row(modifier = modifier
         .fillMaxWidth()
@@ -198,7 +199,7 @@ fun SearchBar(
 
         when(notesViewType) {
             NotesViewType.Column -> {
-                IconButton(onClick = { /*TODO*/ }) {
+                IconButton(onClick = changeNotesViewType) {
                     Icon(tint = Color(0xFFC0CBD1),
                         imageVector = ImageVector.vectorResource(id = R.drawable.splitscreen_24dp_e8eaed_fill0_wght400_grad0_opsz24),
                         contentDescription = "change note display type"
@@ -206,7 +207,7 @@ fun SearchBar(
                 } 
             }
             NotesViewType.Grid -> {
-                IconButton(onClick = { /*TODO*/ }) {
+                IconButton(onClick = changeNotesViewType) {
                     Icon(tint = Color(0xFFC0CBD1),
                         imageVector = ImageVector.vectorResource(id = R.drawable.grid_view_24dp_e8eaed_fill0_wght400_grad0_opsz24),
                         contentDescription = "change note display type"
@@ -255,7 +256,7 @@ fun NotesCategoryName(
 @Composable
 fun SearchBarPreview() {
     PetProjectTheme {
-        SearchBar(onNavigationIconClicked = {}, notesViewType = NotesViewType.Column)
+        SearchBar(onNavigationIconClicked = {}, notesViewType = NotesViewType.Column, changeNotesViewType = {})
     }
 }
 
@@ -328,13 +329,13 @@ fun MainScreenPreview() {
                         TagUi( name="aab")
                     ), pinned = true),
                 NoteUi(title = "d", content = "bsxac", tags = listOf(), pinned = true),
-                NoteUi(title = "d", content = "bsxac", tags = listOf(), pinned = true),
+                NoteUi(title = "d", content = "bsxac", tags = listOf(), pinned = false),
                 NoteUi(title = "d", content = "bsxac", tags = listOf(), pinned = true),
                 NoteUi(title = "d", content = "bsxac", tags = listOf(), pinned = true),
                 NoteUi(title = "d", content = "bsxac", tags = listOf(), pinned = true),
 
 
-            ), onNavigationIconClicked = {}, onAddNote = {}, onNoteClick = {}, notesViewType = NotesViewType.Column
+            ), onNavigationIconClicked = {}, onAddNote = {}, onNoteClick = {}, notesViewType = NotesViewType.Column, changeNotesViewType = {}
         )
     }
 }

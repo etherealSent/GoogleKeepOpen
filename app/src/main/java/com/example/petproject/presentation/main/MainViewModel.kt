@@ -94,6 +94,14 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    fun changeNotesViewType() {
+        _uiMainState.update {
+            it.copy(
+                notesViewType = if (it.notesViewType == NotesViewType.Column) NotesViewType.Grid else NotesViewType.Column
+            )
+        }
+    }
+
     fun selectTag(tagUi: TagUi) {
         _uiMainState.update {
             it.copy(

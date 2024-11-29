@@ -11,5 +11,6 @@ data class NoteUi(
     val lastUpdate: Date = Date(0L),
     val photoPaths: List<String> = emptyList(),
     val isArchived: Boolean = false,
-    val isDeleted: Boolean = false
+    val isDeleted: Boolean = false,
+    val position: Int = 0
 )

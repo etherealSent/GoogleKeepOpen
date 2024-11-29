@@ -1,6 +1,5 @@
 package com.example.petproject.presentation.mappers
 
-import com.example.petproject.domain.entities.note.Note
 import com.example.petproject.domain.entities.note.NoteWithTags
 import com.example.petproject.presentation.model.NoteUi
 import com.example.petproject.presentation.model.TagUi
@@ -22,7 +21,8 @@ class NoteWithTagsToUiMapper @Inject constructor() : (NoteWithTags) -> NoteUi {
             lastUpdate = note.note.lastUpdate,
             photoPaths = note.note.photoPaths,
             isArchived = note.note.isArchived,
-            isDeleted = note.note.isDeleted
+            isDeleted = note.note.isDeleted,
+            position = note.note.position
         )
     }
 }

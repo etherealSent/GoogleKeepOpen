@@ -316,7 +316,8 @@ fun MainNavigationDrawer(
                         }
                     },
                     notesViewType = notesViewType,
-                    changeNotesViewType = changeNotesViewType
+                    changeNotesViewType = changeNotesViewType,
+                    onSwap = {idx1, idx2 -> }
                 )
             }
             MainScreenType.ByTag -> {

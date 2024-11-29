@@ -4,6 +4,10 @@ import com.example.petproject.domain.repository.note.NoteRepository
 import com.example.petproject.domain.repository.note.TagRepository
 import com.example.petproject.domain.usecases.note.DeleteNoteUseCase
 import com.example.petproject.domain.usecases.note.DeleteNoteUseCaseImpl
+import com.example.petproject.domain.usecases.note.GetAmountOfOtherNotesUseCase
+import com.example.petproject.domain.usecases.note.GetAmountOfOtherNotesUseCaseImpl
+import com.example.petproject.domain.usecases.note.GetAmountOfPinnedNotesUseCase
+import com.example.petproject.domain.usecases.note.GetAmountOfPinnedNotesUseCaseImpl
 import com.example.petproject.domain.usecases.note.GetNoteByIdUseCase
 import com.example.petproject.domain.usecases.note.GetNoteByIdUseCaseImpl
 import com.example.petproject.domain.usecases.note.GetNoteWithTagsByIdUseCase
@@ -113,5 +117,21 @@ object DomainModule {
         repository: NoteRepository
     ) : DeleteNoteUseCase {
         return DeleteNoteUseCaseImpl(repository)
+    }
+
+    @Singleton
+    @Provides
+    fun getAmountOfPinnedNotesUseCase(
+        repository: NoteRepository
+    ): GetAmountOfPinnedNotesUseCase {
+        return GetAmountOfPinnedNotesUseCaseImpl(repository)
+    }
+
+    @Singleton
+    @Provides
+    fun getAmountOfOtherNotesUseCase(
+        repository: NoteRepository
+    ): GetAmountOfOtherNotesUseCase {
+        return GetAmountOfOtherNotesUseCaseImpl(repository)
     }
 }

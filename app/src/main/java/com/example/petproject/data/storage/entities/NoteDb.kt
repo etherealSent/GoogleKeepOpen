@@ -18,7 +18,8 @@ data class NoteDb(
     @ColumnInfo(name = "lastUpdate") @TypeConverters(DataConverters::class) val lastUpdate: Date = Date(0L),
     @ColumnInfo(name = "photoPaths") @TypeConverters(PhotoPathsConverters::class) val photoPaths: List<String> = emptyList(),
     @ColumnInfo(name = "isArchived") val isArchived: Boolean = false,
-    @ColumnInfo(name = "isDeleted") val isDeleted: Boolean = false
+    @ColumnInfo(name = "isDeleted") val isDeleted: Boolean = false,
+    @ColumnInfo(name = "position") val position: Int = 0
 ) {
     companion object {
         const val NOTE_TABLE_NAME = "note"

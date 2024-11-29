@@ -21,20 +21,29 @@ interface NoteDao {
     @Delete
     fun deleteNote(noteDb: NoteDb)
 
-    @Query("SELECT * FROM note WHERE noteId=:id")
-    fun getNote(id: String) : NoteDb?
+    @Update
+    suspend fun updateNotes(notes: List<NoteDb>)
 
-    @Query("SELECT * FROM note")
+    @Query("SELECT * FROM note WHERE noteId=:id")
+    fun getNote(id: String): NoteDb?
+
+    @Query("SELECT * FROM note ORDER BY position ASC")
     fun getNotes(): List<NoteDb>
 
-    @Query("SELECT * FROM note")
-    fun observeNotes() : Flow<List<NoteDb>>
+    @Query("SELECT * FROM note ORDER BY position ASC")
+    fun observeNotes(): Flow<List<NoteDb>>
+
+    @Query("SELECT COUNT(*) FROM note WHERE pinned = 1")
+    fun getPinnedNotesSize(): Int
+
+    @Query("SELECT COUNT(*) FROM note WHERE pinned = 0")
+    fun getOtherNotesSize(): Int
 
     @Transaction
     @Query("SELECT * FROM note WHERE noteId=:id")
     fun getNoteWithTags(id: String) : NoteWithTagsDb?
 
     @Transaction
-    @Query("SELECT * FROM note")
+    @Query("SELECT * FROM note ORDER BY position ASC")
     fun observeNoteWithTags(): Flow<List<NoteWithTagsDb>>
 }

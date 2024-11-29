@@ -18,5 +18,6 @@ data class EditNoteState(
     val bottomSheetType: BottomSheetType = BottomSheetType.Add,
     val isArchived: Boolean = false,
     val isDeleted: Boolean = false,
-    val copiedId: String = ""
+    val copiedId: String = "",
+    val position: Int = 0
 )

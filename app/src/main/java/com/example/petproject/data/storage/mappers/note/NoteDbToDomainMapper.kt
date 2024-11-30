@@ -14,7 +14,8 @@ class NoteDbToDomainMapper @Inject constructor() : (NoteDb) -> Note {
             lastUpdate = noteDb.lastUpdate,
             photoPaths = noteDb.photoPaths,
             isArchived = noteDb.isArchived,
-            isDeleted = noteDb.isDeleted
+            isDeleted = noteDb.isDeleted,
+            position = noteDb.position
         )
     }
 }

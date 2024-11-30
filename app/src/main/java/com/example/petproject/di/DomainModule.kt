@@ -22,6 +22,8 @@ import com.example.petproject.domain.usecases.note.SaveNoteUseCase
 import com.example.petproject.domain.usecases.note.SaveNoteUseCaseImpl
 import com.example.petproject.domain.usecases.note.UpdateNoteUseCase
 import com.example.petproject.domain.usecases.note.UpdateNoteUseCaseImpl
+import com.example.petproject.domain.usecases.note.UpdateNotesPositionsUseCase
+import com.example.petproject.domain.usecases.note.UpdateNotesPositionsUseCaseImpl
 import com.example.petproject.domain.usecases.tag.SaveTagUseCase
 import com.example.petproject.domain.usecases.tag.SaveTagUseCaseImpl
 import com.example.petproject.domain.usecases.tag.UpdateTagUseCase
@@ -134,4 +136,13 @@ object DomainModule {
     ): GetAmountOfOtherNotesUseCase {
         return GetAmountOfOtherNotesUseCaseImpl(repository)
     }
+
+    @Singleton
+    @Provides
+    fun updateNotesPositionsUseCase(
+        repository: NoteRepository
+    ): UpdateNotesPositionsUseCase {
+        return UpdateNotesPositionsUseCaseImpl(repository)
+    }
+
 }

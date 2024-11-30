@@ -14,6 +14,7 @@ import com.example.petproject.domain.usecases.note.GetAmountOfPinnedNotesUseCase
 import com.example.petproject.domain.usecases.note.GetNoteByIdUseCase
 import com.example.petproject.domain.usecases.note.SaveNoteUseCase
 import com.example.petproject.domain.usecases.note.UpdateNoteUseCase
+import com.example.petproject.domain.usecases.note.UpdateNotesPositionsUseCase
 import com.example.petproject.presentation.mappers.NoteToDomainMapper
 import com.example.petproject.presentation.model.NoteUi
 import com.example.petproject.utils.files.FileInfo
@@ -34,6 +35,7 @@ class EditNoteViewModel @Inject constructor(
     private val saveNoteUseCase: SaveNoteUseCase,
     private val getAmountOfPinnedNotesUseCase: GetAmountOfPinnedNotesUseCase,
     private val getAmountOfOtherNotesUseCase: GetAmountOfOtherNotesUseCase,
+    private val updateNotesPositionsUseCase: UpdateNotesPositionsUseCase,
     private val noteToDomainMapper: NoteToDomainMapper = NoteToDomainMapper(),
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -176,23 +178,59 @@ class EditNoteViewModel @Inject constructor(
         if (noteId == null) {
             throw RuntimeException("updateNote() was called but note is new.")
         }
+
             viewModelScope.launch {
-                updateNoteUseCase.updateNote(
-                    uiState.value.run {
-                        Note(
-                            id = noteId,
-                            title = title,
-                            content = content,
-                            pinned = pinned,
-                            lastUpdate = lastUpdate,
-                            photoPaths = photoPaths,
-                            isArchived = isArchived,
-                            isDeleted = isDeleted
-                        )
-                    }
-                )
+                val listChanged = initState.pinned != _uiState.value.pinned
+
+                // list changed
+                if (listChanged) {
+                    val currentPosition = _uiState.value.position
+
+                    val newPosition = if (_uiState.value.pinned) {
+                        getAmountOfPinnedNotesUseCase.getAmountOfPinnedNotes() + 1
+                    } else { getAmountOfOtherNotesUseCase.getAmountOfOtherNotes() + 1 }
+
+                    updateNotesPositionsUseCase.updateNotesPositions(
+                        fromPosition = currentPosition + 1,
+                        pinned = initState.pinned
+                    )
+
+                    updateNoteUseCase.updateNote(
+                        uiState.value.run {
+                            Note(
+                                id = noteId,
+                                title = title,
+                                content = content,
+                                pinned = pinned,
+                                lastUpdate = lastUpdate,
+                                photoPaths = photoPaths,
+                                isArchived = isArchived,
+                                isDeleted = isDeleted,
+                                position = newPosition
+                            )
+                        }
+                    )
+                } else {
+                    // list not changed => position not changed
+                    updateNoteUseCase.updateNote(
+                        uiState.value.run {
+                            Note(
+                                id = noteId,
+                                title = title,
+                                content = content,
+                                pinned = pinned,
+                                lastUpdate = lastUpdate,
+                                photoPaths = photoPaths,
+                                isArchived = isArchived,
+                                isDeleted = isDeleted,
+                                position = initState.position
+                            )
+                        }
+                    )
+                    Log.d("HAHAHHA", "pos ${initState.position}")
+
+                }
             }
-            Log.d("NoteDetailsViewModel", "PhotoPaths: ${uiState.value.photoPaths.size}")
     }
 
     private fun updateLastUpdateTime(date: Date) {
@@ -220,7 +258,8 @@ class EditNoteViewModel @Inject constructor(
                             lastUpdate = note.lastUpdate,
                             photoPaths = note.photoPaths,
                             isArchived = note.isArchived,
-                            isDeleted = note.isDeleted
+                            isDeleted = note.isDeleted,
+                            position = note.position
                         )
                     }
                     initState = EditNoteState(
@@ -232,8 +271,11 @@ class EditNoteViewModel @Inject constructor(
                         lastUpdate = note.lastUpdate,
                         photoPaths = note.photoPaths,
                         isArchived = note.isArchived,
-                        isDeleted = note.isDeleted
+                        isDeleted = note.isDeleted,
+                        position = note.position
                     )
+                    Log.d("HAHAHH2", "pos ${initState.position}")
+
                 } else {
                     _uiState.update {
                         it.copy(

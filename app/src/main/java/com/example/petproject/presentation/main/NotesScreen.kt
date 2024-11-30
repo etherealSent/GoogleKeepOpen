@@ -198,7 +198,7 @@ fun NotesScreen(
 }
 
 inline fun LazyListScope.categoryNotesBlock(noteUis: List<NoteUi>, crossinline onNoteClick: (NoteUi) -> Unit) {
-    items(noteUis, key = {it.position}) { note ->
+    items(noteUis) { note ->
         Note(modifier = Modifier
             .padding(bottom = 8.dp)
             .clickable { onNoteClick(note) },note)
@@ -206,7 +206,7 @@ inline fun LazyListScope.categoryNotesBlock(noteUis: List<NoteUi>, crossinline o
 }
 
 inline fun LazyStaggeredGridScope.categoryNotesBlock(noteUis: List<NoteUi>, crossinline onNoteClick: (NoteUi) -> Unit) {
-    items(noteUis, key = {it.position}) { note ->
+    items(noteUis) { note ->
         Note(modifier = Modifier
             .padding(bottom = 8.dp)
             .clickable { onNoteClick(note) },note)

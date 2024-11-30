@@ -39,10 +39,10 @@ interface NoteDao {
     @Query("SELECT * FROM note ORDER BY position ASC")
     fun observeNotes(): Flow<List<NoteDb>>
 
-    @Query("SELECT COUNT(*) FROM note WHERE pinned=1")
+    @Query("SELECT COUNT(*) FROM note WHERE pinned=1 AND isDeleted=0 AND isArchived=0")
     fun getPinnedNotesSize(): Int
 
-    @Query("SELECT COUNT(*) FROM note WHERE pinned=0")
+    @Query("SELECT COUNT(*) FROM note WHERE pinned=0 AND isDeleted=0 AND isArchived=0")
     fun getOtherNotesSize(): Int
 
     @Transaction

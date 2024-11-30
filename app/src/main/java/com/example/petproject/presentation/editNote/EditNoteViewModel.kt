@@ -1,10 +1,6 @@
 package com.example.petproject.presentation.editNote
 
-import android.content.Intent
-import android.net.Uri
 import android.util.Log
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -17,14 +13,11 @@ import com.example.petproject.domain.usecases.note.UpdateNoteUseCase
 import com.example.petproject.domain.usecases.note.UpdateNotesPositionsUseCase
 import com.example.petproject.presentation.mappers.NoteToDomainMapper
 import com.example.petproject.presentation.model.NoteUi
-import com.example.petproject.utils.files.FileInfo
-import com.example.petproject.utils.files.ProviderFileManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
 import java.util.Date
 import javax.inject.Inject
 
@@ -112,12 +105,28 @@ class EditNoteViewModel @Inject constructor(
     }
 
     fun deleteNote() {
+        viewModelScope.launch {
+            val currentPosition = _uiState.value.position
+            updateNotesPositionsUseCase.decNotesPositions(
+                fromPosition = currentPosition + 1,
+                pinned = _uiState.value.pinned
+            )
+        }
         _uiState.update {
-            it.copy(isDeleted = true)
+            it.copy(isDeleted = true, position = 0)
         }
     }
 
     fun archiveNote() {
+
+        viewModelScope.launch {
+            val currentPosition = _uiState.value.position
+            updateNotesPositionsUseCase.decNotesPositions(
+                fromPosition = currentPosition + 1,
+                pinned = _uiState.value.pinned
+            )
+        }
+
         _uiState.update {
             it.copy(isArchived = true)
         }
@@ -125,13 +134,20 @@ class EditNoteViewModel @Inject constructor(
 
     fun copyNote() {
         viewModelScope.launch {
+
+            updateNotesPositionsUseCase.incNotesPositions(
+                fromPosition = _uiState.value.position + 1,
+                pinned = initState.pinned
+            )
+
             val id = saveNoteUseCase.saveNote(
                 noteToDomainMapper(
                     _uiState.value.run {
-                        NoteUi(id = "", title, content, listOf(), pinned, lastUpdate, photoPaths, isArchived, isDeleted)
+                        NoteUi(id = "", title, content, listOf(), pinned, lastUpdate, photoPaths, isArchived, isDeleted, position + 1)
                     }
                 )
             )
+
             _uiState.update {
                 it.copy(copiedId = id, showBottomSheet = false)
             }
@@ -190,7 +206,7 @@ class EditNoteViewModel @Inject constructor(
                         getAmountOfPinnedNotesUseCase.getAmountOfPinnedNotes() + 1
                     } else { getAmountOfOtherNotesUseCase.getAmountOfOtherNotes() + 1 }
 
-                    updateNotesPositionsUseCase.updateNotesPositions(
+                    updateNotesPositionsUseCase.decNotesPositions(
                         fromPosition = currentPosition + 1,
                         pinned = initState.pinned
                     )
@@ -227,8 +243,6 @@ class EditNoteViewModel @Inject constructor(
                             )
                         }
                     )
-                    Log.d("HAHAHHA", "pos ${initState.position}")
-
                 }
             }
     }

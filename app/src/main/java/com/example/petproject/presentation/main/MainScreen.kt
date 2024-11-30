@@ -79,7 +79,11 @@ fun MainScreenWrapper(
         selectedTagUi = state.uiMainState.selectedTagUi,
         onTagUiSelected = viewModel::selectTag,
         notesViewType = state.uiMainState.notesViewType,
-        changeNotesViewType = viewModel::changeNotesViewType
+        changeNotesViewType = viewModel::changeNotesViewType,
+        onNoteSelected = viewModel::onNoteSelected,
+        noteSelected = state.uiMainState.noteSelected,
+        selectedNotes = state.uiMainState.notesSelected,
+        closeNoteSelection = viewModel::closeNoteSelection
     )
 }
 
@@ -101,7 +105,11 @@ fun MainNavigationDrawer(
     onHelpClicked: () -> Unit,
     onTagUiSelected: (TagUi) -> Unit,
     notesViewType: NotesViewType,
-    changeNotesViewType: () -> Unit
+    changeNotesViewType: () -> Unit,
+    noteSelected: Boolean,
+    onNoteSelected: (NoteUi) -> Unit,
+    selectedNotes: List<NoteUi>,
+    closeNoteSelection: () -> Unit
 ) {
     val upNavigationItems = listOf(
         NavigationItem(
@@ -317,7 +325,11 @@ fun MainNavigationDrawer(
                     },
                     notesViewType = notesViewType,
                     changeNotesViewType = changeNotesViewType,
-                    onSwap = {idx1, idx2 -> }
+                    onSwap = {idx1, idx2 -> },
+                    noteSelected = noteSelected,
+                    onNoteSelected = onNoteSelected,
+                    selectedNotes = selectedNotes,
+                    closeNoteSelection = closeNoteSelection
                 )
             }
             MainScreenType.ByTag -> {
@@ -332,7 +344,10 @@ fun MainNavigationDrawer(
                     onFABClicked = onAddNote,
                     notes = notes.filter { it.tags.contains(selectedTagUi) },
                     onNoteClicked = onNoteClick,
-                    tagUi = selectedTagUi
+                    tagUi = selectedTagUi,
+                    noteSelected = noteSelected,
+                    onNoteSelected = onNoteSelected,
+                    selectedNotes = selectedNotes
                 )
             }
             MainScreenType.Bucket -> {
@@ -340,7 +355,9 @@ fun MainNavigationDrawer(
                     onNavigationIconClicked = { /*TODO*/ },
                     onFABClicked = { /*TODO*/ },
                     onNoteClicked = {},
-                    notes = notes.filter { it.isDeleted }
+                    notes = notes.filter { it.isDeleted },
+                    noteSelected = noteSelected,
+                    selectedNotes = selectedNotes
                 )
             }
             MainScreenType.Archive -> {
@@ -392,7 +409,11 @@ fun MainNavigationDrawerPreview() {
             selectIndex = {},
             onTagUiSelected = {},
             notesViewType = NotesViewType.Column,
-            changeNotesViewType = {}
+            changeNotesViewType = {},
+            onNoteSelected = {},
+            noteSelected = false,
+            selectedNotes = listOf(),
+            closeNoteSelection = {}
         )
     }
 }

@@ -4,8 +4,10 @@ import android.content.res.Configuration
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,10 +23,13 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -41,11 +46,13 @@ import com.example.petproject.presentation.model.NoteUi
 import com.example.petproject.presentation.model.TagUi
 import com.example.petproject.ui.theme.PetProjectTheme
 import androidx.compose.ui.unit.sp
+import com.example.petproject.presentation.sharedUi.DragNote
 import com.example.petproject.presentation.sharedUi.FAB
 import com.example.petproject.presentation.sharedUi.Note
 import com.example.petproject.presentation.sharedUi.Tag
 import com.example.petproject.presentation.sharedUi.TooltipIconButton
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotesScreen(
     notes: List<NoteUi>,
@@ -54,10 +61,31 @@ fun NotesScreen(
     onNoteClick: (NoteUi) -> Unit,
     notesViewType: NotesViewType,
     changeNotesViewType: () -> Unit,
-    onSwap: (Int, Int) -> Unit
+    onSwap: (Int, Int) -> Unit,
+    onNoteSelected: (NoteUi) -> Unit,
+    noteSelected: Boolean,
+    selectedNotes: List<NoteUi>,
+    closeNoteSelection: () -> Unit
 ) {
     Scaffold(
-        floatingActionButton = { FAB(onAddNote) }
+        floatingActionButton = { FAB(onAddNote) },
+        topBar = {
+            if (noteSelected) {
+                TopAppBar(
+                    navigationIcon = {
+                        IconButton(
+                            onClick = closeNoteSelection
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "close"
+                            )
+                        }
+                    },
+                    title = { Text(text = "${selectedNotes.size}") },
+                )
+            }
+        }
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
             val pinnedNotes = notes.filter { it.pinned }
@@ -79,13 +107,16 @@ fun NotesScreen(
                                         start = 16.dp,
                                         end = 16.dp,
                                         bottom = 12.dp,
-                                        top = 76.dp
+                                        top = if (!noteSelected) 76.dp else 8.dp
                                     )
                                 )
                             }
                             categoryNotesBlock(
                                 noteUis = pinnedNotes,
                                 onNoteClick = onNoteClick,
+                                onNoteSelected = onNoteSelected,
+                                noteSelected = noteSelected,
+                                selectedNotes = selectedNotes
                             )
                         }
 
@@ -104,6 +135,9 @@ fun NotesScreen(
                             categoryNotesBlock(
                                 noteUis = otherNotes,
                                 onNoteClick = onNoteClick,
+                                onNoteSelected = onNoteSelected,
+                                noteSelected = noteSelected,
+                                selectedNotes = selectedNotes
                             )
                         } else if (otherNotes.isNotEmpty()) {
                             item {
@@ -120,6 +154,9 @@ fun NotesScreen(
                             categoryNotesBlock(
                                 noteUis = otherNotes,
                                 onNoteClick = onNoteClick,
+                                onNoteSelected = onNoteSelected,
+                                noteSelected = noteSelected,
+                                selectedNotes = selectedNotes
                             )
                         }
                     }
@@ -134,7 +171,7 @@ fun NotesScreen(
                                 LazyVerticalStaggeredGrid(
                                     columns = StaggeredGridCells.Fixed(2),
                                     content = {
-                                        categoryNotesBlock(pinnedNotes, onNoteClick)
+                                        categoryNotesBlock(pinnedNotes, onNoteClick, selectedNotes)
                                     },
                                     verticalItemSpacing = 8.dp,
                                     horizontalArrangement =  Arrangement.spacedBy(8.dp),
@@ -152,7 +189,7 @@ fun NotesScreen(
                                 LazyVerticalStaggeredGrid(
                                     columns = StaggeredGridCells.Fixed(2),
                                     content = {
-                                        categoryNotesBlock(otherNotes, onNoteClick)
+                                        categoryNotesBlock(otherNotes, onNoteClick, selectedNotes)
                                     },
                                     verticalItemSpacing = 8.dp,
                                     horizontalArrangement =  Arrangement.spacedBy(8.dp),
@@ -168,7 +205,7 @@ fun NotesScreen(
                                 LazyVerticalStaggeredGrid(
                                     columns = StaggeredGridCells.Fixed(2),
                                     content = {
-                                        categoryNotesBlock(otherNotes, onNoteClick)
+                                        categoryNotesBlock(otherNotes, onNoteClick, selectedNotes)
                                     },
                                     verticalItemSpacing = 8.dp,
                                     horizontalArrangement =  Arrangement.spacedBy(8.dp),
@@ -181,7 +218,7 @@ fun NotesScreen(
                 }
             }
             AnimatedVisibility(
-                visible = true,
+                visible = !noteSelected,
                 enter = slideInVertically { fullHeight -> -fullHeight },
                 exit = slideOutVertically { fullHeight -> -fullHeight }
             ) {
@@ -197,19 +234,49 @@ fun NotesScreen(
     }
 }
 
-inline fun LazyListScope.categoryNotesBlock(noteUis: List<NoteUi>, crossinline onNoteClick: (NoteUi) -> Unit) {
+@Composable
+fun NotesTopBar() {
+
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+inline fun LazyListScope.categoryNotesBlock(
+    noteUis: List<NoteUi>,
+    crossinline onNoteClick: (NoteUi) -> Unit = {},
+    crossinline onNoteSelected: (NoteUi) -> Unit = {},
+    noteSelected: Boolean,
+    selectedNotes: List<NoteUi>
+) {
     items(noteUis) { note ->
-        Note(modifier = Modifier
+        DragNote(modifier = Modifier
             .padding(bottom = 8.dp)
-            .clickable { onNoteClick(note) },note)
+            .combinedClickable(
+                onClick = {
+                    if (noteSelected) {
+                        onNoteSelected(note)
+                    } else {
+                        onNoteClick(note)
+                    }
+                },
+                onLongClick = {
+                    onNoteSelected(note)
+                }
+            ),
+            noteUi = note,
+            isSelected = selectedNotes.contains(note)
+        )
     }
 }
 
-inline fun LazyStaggeredGridScope.categoryNotesBlock(noteUis: List<NoteUi>, crossinline onNoteClick: (NoteUi) -> Unit) {
+inline fun LazyStaggeredGridScope.categoryNotesBlock(
+    noteUis: List<NoteUi>,
+    crossinline onNoteClick: (NoteUi) -> Unit,
+    selectedNotes: List<NoteUi>
+) {
     items(noteUis) { note ->
         Note(modifier = Modifier
             .padding(bottom = 8.dp)
-            .clickable { onNoteClick(note) },note)
+            .clickable { onNoteClick(note) },note, isSelected = selectedNotes.contains(note))
     }
 }
 
@@ -329,7 +396,7 @@ fun NotePreview() {
                     TagUi(name ="aab")
                 ),
                 pinned = false
-            )
+            ), isSelected = false
         )
     }
 }
@@ -379,7 +446,8 @@ fun MainScreenPreview() {
                 NoteUi(title = "d", content = "bsxac", tags = listOf(), pinned = true),
 
 
-            ), onNavigationIconClicked = {}, onAddNote = {}, onNoteClick = {}, notesViewType = NotesViewType.Column, changeNotesViewType = {}, onSwap = {i,j ->}
+            ), onNavigationIconClicked = {}, onAddNote = {}, onNoteClick = {}, notesViewType = NotesViewType.Column, changeNotesViewType = {},
+            onSwap = {i,j ->}, onNoteSelected = {}, noteSelected = false, selectedNotes = listOf(), closeNoteSelection = {}
         )
     }
 }

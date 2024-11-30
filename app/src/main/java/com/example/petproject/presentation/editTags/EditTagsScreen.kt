@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -28,6 +29,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
@@ -48,7 +52,7 @@ fun EditTagsScreenWrapper(
 
     EditTagsScreen(
         tags = state.tags,
-        editing = state.editingId.isNotEmpty(),
+        editingId = state.editingId,
         onEditTagClicked = viewModel::onTagEdit,
         onBack = onBack,
         newTagName = state.newTagName,
@@ -62,14 +66,14 @@ fun EditTagsScreenWrapper(
 @Composable
 fun EditTagsScreen(
     tags: List<TagUi>,
-    editing: Boolean,
+    editingId: String,
     onEditTagClicked: (String) -> Unit,
     onBack: () -> Unit,
     newTagName: String,
     onNewTagNameChanged: (String) -> Unit,
     onAddClicked: () -> Unit,
     onCloseClicked: () -> Unit,
-    onTagChanged: (TagUi, String) -> Unit
+    onTagChanged: (TagUi, String) -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -84,9 +88,9 @@ fun EditTagsScreen(
                         onTagChange = onNewTagNameChanged,
                         onCloseClicked = onCloseClicked,
                         onAddClicked = onAddClicked,
-                        onEditNewTagClicked = { /*TODO*/ },
-                        editing = newTagName.isNotEmpty(),
-                        tagName = newTagName
+                        editing = editingId == "newTag",
+                        tagName = newTagName,
+                        onEditNewTagClicked = { onEditTagClicked("newTag") }
                     )
                 }
                 items(tags, key = { it.id }) { tag ->
@@ -96,8 +100,10 @@ fun EditTagsScreen(
                             onTagChanged(tag, it)
                         },
                         onDeleteClicked = {},
-                        onCompleteClicked = {},
-                        editing = editing,
+                        onCompleteClicked = {
+                            onEditTagClicked("")
+                                            },
+                        editing = editingId == tag.id,
                         onEditTagClicked = { onEditTagClicked(tag.id) }
                     )
                 }
@@ -111,43 +117,64 @@ fun CreateTagOption(
     onTagChange: (String) -> Unit,
     onCloseClicked: () -> Unit,
     onAddClicked: () -> Unit,
-    onEditNewTagClicked: () -> Unit,
     editing: Boolean,
-    tagName: String
+    tagName: String,
+    onEditNewTagClicked: () -> Unit,
+    focusRequester: FocusRequester = remember { FocusRequester() }
 ) {
-    Row(modifier = Modifier
-        .clickable { onEditNewTagClicked() }
-        .fillMaxWidth()
-        .padding(horizontal = 15.dp), verticalAlignment = Alignment.CenterVertically) {
-
+    Column(Modifier.fillMaxWidth()) {
         if (editing) {
-            IconButton(onClick = onCloseClicked) {
+            HorizontalDivider(thickness = 1.dp, color = Color.Gray)
+        }
+        Row(modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 15.dp), verticalAlignment = Alignment.CenterVertically) {
+
+            if (editing) {
+                IconButton(onClick = onCloseClicked) {
+                    Icon(
+                        imageVector = ImageVector.vectorResource(id = R.drawable.close_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+                        contentDescription = "tag"
+                    )
+                }
+            } else {
                 Icon(
-                    imageVector = ImageVector.vectorResource(id = R.drawable.close_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+                    imageVector = Icons.Default.Add,
                     contentDescription = "tag"
                 )
             }
-        } else {
-            Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "tag"
+            TextField(
+                modifier = Modifier
+                    .focusRequester(focusRequester)
+                    .onFocusEvent { state ->
+                        if (state.isFocused) {
+                            onEditNewTagClicked()
+                        }
+                    },
+                value = tagName,
+                onValueChange = onTagChange,
+                placeholder = { Text("Создать ярлык", style = MaterialTheme.typography.bodyLarge) },
+                colors = TextFieldDefaults.colors(
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedContainerColor = Color.Transparent
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        focusRequester.freeFocus()
+                    }
+                ),
+                singleLine = true
             )
-        }
-        TextField(
-            value = tagName,
-            onValueChange = onTagChange,
-            placeholder = { Text("Создать ярлык", style = MaterialTheme.typography.bodyLarge) },
-            colors = TextFieldDefaults.colors(
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                unfocusedContainerColor = Color.Transparent,
-                focusedContainerColor = Color.Transparent
-            )
-        )
-        if (editing) {
-            IconButton(onClick = onAddClicked) {
-                Icon(imageVector = ImageVector.vectorResource(id = R.drawable.check_24dp_e8eaed_fill0_wght400_grad0_opsz24), contentDescription = "edit")
+            if (editing) {
+                IconButton(onClick = onAddClicked) {
+                    Icon(imageVector = ImageVector.vectorResource(id = R.drawable.check_24dp_e8eaed_fill0_wght400_grad0_opsz24), contentDescription = "edit")
+                }
             }
+        }
+        if (editing) {
+            HorizontalDivider(thickness = 1.dp, color = Color.Gray)
         }
     }
 }
@@ -159,47 +186,70 @@ fun TagOption(
     onDeleteClicked: () -> Unit,
     onCompleteClicked: () -> Unit,
     editing: Boolean,
-    onEditTagClicked: () -> Unit
+    onEditTagClicked: () -> Unit,
+    focusRequester: FocusRequester = remember { FocusRequester() }
 ) {
-    Row(modifier = Modifier
-        .clickable { onEditTagClicked() }
-        .fillMaxWidth()
-        .padding(horizontal = 15.dp), verticalAlignment = Alignment.CenterVertically) {
-
+    Column(Modifier.fillMaxWidth()) {
         if (editing) {
-            IconButton(onClick = {}) {
-                Icon(
-                    imageVector = ImageVector.vectorResource(id = R.drawable.delete_24dp_e8eaed_fill0_wght400_grad0_opsz24),
-                    contentDescription = "tag"
-                )
-            }
-        } else {
-            IconButton(onClick = {}) {
+            HorizontalDivider(thickness = 1.dp, color = Color.Gray)
+        }
+        Row(modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 15.dp), verticalAlignment = Alignment.CenterVertically) {
+
+            if (editing) {
+                IconButton(onClick = onDeleteClicked) {
+                    Icon(
+                        imageVector = ImageVector.vectorResource(id = R.drawable.delete_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+                        contentDescription = "tag"
+                    )
+                }
+            } else {
                 Icon(
                     imageVector = ImageVector.vectorResource(id = R.drawable.label_24dp_e8eaed_fill0_wght400_grad0_opsz24),
                     contentDescription = "tag"
                 )
             }
-        }
-        TextField(
-            value = tagUi.name,
-            onValueChange = onTagChange,
-            placeholder = { Text("Текст", style = MaterialTheme.typography.bodyLarge) },
-            colors = TextFieldDefaults.colors(
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                unfocusedContainerColor = Color.Transparent,
-                focusedContainerColor = Color.Transparent
+            TextField(
+                modifier = Modifier
+                    .focusRequester(focusRequester)
+                    .onFocusEvent { state ->
+                        if (state.isFocused) {
+                            onEditTagClicked()
+                        }
+                    },
+                value = tagUi.name,
+                onValueChange = onTagChange,
+                placeholder = { Text("Текст", style = MaterialTheme.typography.bodyLarge) },
+                colors = TextFieldDefaults.colors(
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedContainerColor = Color.Transparent
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        onCompleteClicked()
+                        focusRequester.freeFocus()
+                    }
+                ),
+                singleLine = true
             )
-        )
+            if (editing) {
+                IconButton(onClick = {
+                    onCompleteClicked()
+                    focusRequester.freeFocus()
+                } ) {
+                    Icon(imageVector = ImageVector.vectorResource(id = R.drawable.check_24dp_e8eaed_fill0_wght400_grad0_opsz24), contentDescription = "edit")
+                }
+            } else {
+                IconButton(onClick = { focusRequester.requestFocus() }) {
+                    Icon(imageVector = ImageVector.vectorResource(id = R.drawable.edit_24dp_e8eaed_fill0_wght400_grad0_opsz24), contentDescription = "edit")
+                }
+            }
+        }
         if (editing) {
-            IconButton(onClick = { /*TODO*/ }) {
-                Icon(imageVector = ImageVector.vectorResource(id = R.drawable.check_24dp_e8eaed_fill0_wght400_grad0_opsz24), contentDescription = "edit")
-            }
-        } else {
-            IconButton(onClick = { /*TODO*/ }) {
-                Icon(imageVector = ImageVector.vectorResource(id = R.drawable.edit_24dp_e8eaed_fill0_wght400_grad0_opsz24), contentDescription = "edit")
-            }
+            HorizontalDivider(thickness = 1.dp, color = Color.Gray)
         }
     }
 }

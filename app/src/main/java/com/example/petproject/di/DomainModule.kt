@@ -16,6 +16,8 @@ import com.example.petproject.domain.usecases.note.ObserveNotesUseCase
 import com.example.petproject.domain.usecases.note.ObserveNotesUseCaseImpl
 import com.example.petproject.domain.usecases.note.ObserveNotesWithTagsUseCase
 import com.example.petproject.domain.usecases.note.ObserveNotesWithTagsUseCaseImpl
+import com.example.petproject.domain.usecases.note.PinNotesUseCase
+import com.example.petproject.domain.usecases.note.PinNotesUseCaseImpl
 import com.example.petproject.domain.usecases.tag.ObserveTagsUseCase
 import com.example.petproject.domain.usecases.tag.ObserveTagsUseCaseImpl
 import com.example.petproject.domain.usecases.note.SaveNoteUseCase
@@ -145,4 +147,11 @@ object DomainModule {
         return UpdateNotesPositionsUseCaseImpl(repository)
     }
 
+    @Singleton
+    @Provides
+    fun pinNotesUseCase(
+        repository: NoteRepository
+    ): PinNotesUseCase {
+        return PinNotesUseCaseImpl(repository)
+    }
 }

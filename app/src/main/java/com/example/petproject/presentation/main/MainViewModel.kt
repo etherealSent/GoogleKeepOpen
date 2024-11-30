@@ -8,6 +8,7 @@ import com.example.petproject.domain.entities.note.NoteWithTags
 import com.example.petproject.domain.entities.tag.Tag
 import com.example.petproject.domain.usecases.note.ObserveNotesUseCase
 import com.example.petproject.domain.usecases.note.ObserveNotesWithTagsUseCase
+import com.example.petproject.domain.usecases.note.PinNotesUseCase
 import com.example.petproject.domain.usecases.note.SaveNoteUseCase
 import com.example.petproject.domain.usecases.tag.ObserveTagsUseCase
 import com.example.petproject.presentation.mappers.NoteToDomainMapper
@@ -33,8 +34,10 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val noteWithTagsToUiMapper: NoteWithTagsToUiMapper,
+    private val noteToDomainMapper: NoteToDomainMapper = NoteToDomainMapper(),
     private val tagToUiMapper: TagToUiMapper,
     private val observeNotesWithTagsUseCase: ObserveNotesWithTagsUseCase,
+    private val pinNotesUseCase: PinNotesUseCase,
     private val observeTagsUseCase: ObserveTagsUseCase
     ) : ViewModel() {
 
@@ -153,6 +156,22 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    private fun resetSelectedNotes() {
+        _uiMainState.update {
+            it.copy(
+                noteSelected = false,
+                notesSelected = emptyList()
+            )
+        }
+    }
+
+    fun pinNotes() {
+        viewModelScope.launch {
+            val notes = _uiMainState.value.notesSelected.map { noteToDomainMapper(it) }
+            pinNotesUseCase.pinNotes(notes,  _uiMainState.value.notesSelected.any { !it.pinned })
+        }
+        resetSelectedNotes()
+    }
 }
 
 // all fixed

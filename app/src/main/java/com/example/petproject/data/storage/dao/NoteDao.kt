@@ -27,6 +27,9 @@ interface NoteDao {
     @Query("SELECT * FROM note WHERE noteId=:id")
     fun getNote(id: String): NoteDb?
 
+    @Query("SELECT * FROM note WHERE noteId IN (:ids)")
+    fun getNotesByIds(ids: List<String>): List<NoteDb>
+
     @Query("SELECT * FROM note ORDER BY position ASC")
     fun getNotes(): List<NoteDb>
 

@@ -83,7 +83,8 @@ fun MainScreenWrapper(
         onNoteSelected = viewModel::onNoteSelected,
         noteSelected = state.uiMainState.noteSelected,
         selectedNotes = state.uiMainState.notesSelected,
-        closeNoteSelection = viewModel::closeNoteSelection
+        closeNoteSelection = viewModel::closeNoteSelection,
+        pinNotes = viewModel::pinNotes
     )
 }
 
@@ -109,7 +110,8 @@ fun MainNavigationDrawer(
     noteSelected: Boolean,
     onNoteSelected: (NoteUi) -> Unit,
     selectedNotes: List<NoteUi>,
-    closeNoteSelection: () -> Unit
+    closeNoteSelection: () -> Unit,
+    pinNotes: () -> Unit
 ) {
     val upNavigationItems = listOf(
         NavigationItem(
@@ -329,7 +331,8 @@ fun MainNavigationDrawer(
                     noteSelected = noteSelected,
                     onNoteSelected = onNoteSelected,
                     selectedNotes = selectedNotes,
-                    closeNoteSelection = closeNoteSelection
+                    closeNoteSelection = closeNoteSelection,
+                    pinSelectedNotes = pinNotes
                 )
             }
             MainScreenType.ByTag -> {
@@ -413,7 +416,8 @@ fun MainNavigationDrawerPreview() {
             onNoteSelected = {},
             noteSelected = false,
             selectedNotes = listOf(),
-            closeNoteSelection = {}
+            closeNoteSelection = {},
+            pinNotes = {}
         )
     }
 }

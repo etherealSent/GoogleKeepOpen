@@ -14,7 +14,9 @@ data class UiMainState(
     val screenType: MainScreenType = MainScreenType.Notes,
     val selectedTagUi: TagUi = TagUi(),
     val selectedIndex: Int = -1,
-    val notesViewType: NotesViewType = NotesViewType.Column
+    val notesViewType: NotesViewType = NotesViewType.Column,
+    val noteSelected: Boolean = false,
+    val notesSelected: List<NoteUi> = emptyList()
 )
 
 enum class NotesViewType {

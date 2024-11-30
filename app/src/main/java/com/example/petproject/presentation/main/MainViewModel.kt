@@ -117,6 +117,42 @@ class MainViewModel @Inject constructor(
             )
         }
     }
+
+    fun onNoteSelected(noteUi: NoteUi) {
+        if (_uiMainState.value.notesSelected.contains(noteUi)) {
+            if (_uiMainState.value.notesSelected.size.dec() == 0) {
+                _uiMainState.update {
+                    it.copy(
+                        noteSelected = false,
+                        notesSelected = it.notesSelected - noteUi
+                    )
+                }
+            } else {
+                _uiMainState.update {
+                    it.copy(
+                        notesSelected = it.notesSelected - noteUi
+                    )
+                }
+            }
+        } else {
+            _uiMainState.update {
+                it.copy(
+                    noteSelected = true,
+                    notesSelected = it.notesSelected + noteUi,
+                )
+            }
+        }
+    }
+
+    fun closeNoteSelection() {
+        _uiMainState.update {
+            it.copy(
+                noteSelected = false,
+                notesSelected = emptyList()
+            )
+        }
+    }
+
 }
 
 // all fixed

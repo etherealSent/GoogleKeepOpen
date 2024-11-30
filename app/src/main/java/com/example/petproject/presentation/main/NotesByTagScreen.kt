@@ -40,7 +40,10 @@ fun NotesByTagScreen(
     onFABClicked: () -> Unit,
     onNoteClicked: (NoteUi) -> Unit,
     notes: List<NoteUi>,
-    tagUi: TagUi
+    tagUi: TagUi,
+    onNoteSelected: (NoteUi) -> Unit,
+    noteSelected: Boolean,
+    selectedNotes: List<NoteUi> = emptyList()
 ) {
 
     Scaffold(
@@ -66,12 +69,18 @@ fun NotesByTagScreen(
 
                 categoryNotesBlock(
                     noteUis = notes.filter { it.pinned },
-                    onNoteClick = onNoteClicked
+                    onNoteClick = onNoteClicked,
+                    onNoteSelected = onNoteSelected,
+                    noteSelected = noteSelected,
+                    selectedNotes = selectedNotes
                 )
 
                 categoryNotesBlock(
                     noteUis = notes.filter { !it.pinned },
-                    onNoteClick = onNoteClicked
+                    onNoteClick = onNoteClicked,
+                    onNoteSelected = onNoteSelected,
+                    noteSelected = noteSelected,
+                    selectedNotes = selectedNotes
                 )
             }
         } else {
@@ -136,7 +145,10 @@ fun NotesByTagScreenPreview() {
             onFABClicked = { /*TODO*/ },
             onNoteClicked = {},
             notes = listOf(),
-            tagUi = TagUi(name = "Тэг")
+            tagUi = TagUi(name = "Тэг"),
+            onNoteSelected = {},
+            noteSelected = false,
+            selectedNotes = emptyList()
         )
     }
 }

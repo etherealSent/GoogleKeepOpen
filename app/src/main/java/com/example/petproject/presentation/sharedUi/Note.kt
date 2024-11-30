@@ -1,23 +1,25 @@
 package com.example.petproject.presentation.sharedUi
 
+import android.content.ClipData
 import android.content.res.Configuration
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.draganddrop.dragAndDropSource
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.petproject.presentation.model.NoteUi
@@ -27,12 +29,28 @@ import com.example.petproject.ui.theme.PetProjectTheme
 @Composable
 fun Note(
     modifier: Modifier = Modifier,
-    noteUi: NoteUi
+    noteUi: NoteUi,
+    isSelected: Boolean
 ) {
     Column(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(5.dp))
+            .let {
+                if (isSelected) {
+                    it.border(
+                        width = 3.dp,
+                        color = Color(0xFF2379B7),
+                        shape = RoundedCornerShape(5.dp)
+                    )
+                } else {
+                    it.border(
+                        width = 1.dp,
+                        color = Color(0xFF40464A),
+                        shape = RoundedCornerShape(5.dp)
+                    )
+                }
+            }
             .border(
                 width = 1.dp,
                 color = Color(0xFF40464A),
@@ -62,6 +80,31 @@ fun Note(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun DragNote(
+    noteUi: NoteUi,
+    modifier: Modifier = Modifier,
+    isSelected: Boolean
+) {
+    Note(
+        noteUi = noteUi,
+        modifier = modifier
+//            .dragAndDropSource {
+//            detectTapGestures(
+//                onLongPress = {
+//                    startTransfer(
+//                        DragAndDropTransferData(
+//                            ClipData.newPlainText("note", "note")
+//                        )
+//                    )
+//                }
+//            )
+//            },
+        ,isSelected = isSelected
+    )
+}
+
 
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
@@ -73,8 +116,45 @@ fun NotePreview() {
                 title = "Title",
                 content = "Now in Android uses the Gradle build system and can be imported directly into Android Studio (make sure you are using the latest stable version available",
                 tags = listOf()
-            )
+            ),
+            isSelected = false
         )
+    }
+}
+
+@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+fun SelectedNotePreview() {
+    PetProjectTheme {
+        Note(
+            noteUi = NoteUi(
+                id = "1",
+                title = "Title",
+                content = "Now in Android uses the Gradle build system and can be imported directly into Android Studio (make sure you are using the latest stable version available",
+                tags = listOf(),
+            ),
+            isSelected = true
+        )
+    }
+}
+
+@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+fun DragNotePreview() {
+    PetProjectTheme {
+        Scaffold {
+            Column(Modifier.padding(it)) {
+                DragNote(
+                    noteUi = NoteUi(
+                        id = "1",
+                        title = "Title",
+                        content = "Now in Android uses the Gradle build system and can be imported directly into Android Studio (make sure you are using the latest stable version available",
+                        tags = listOf()
+                    ),
+                    isSelected = false
+                )
+            }
+        }
     }
 }
 
@@ -117,7 +197,8 @@ fun NoteWithTagsPreview() {
                         name = "Tag 7"
                     )
                 )
-            )
+            ),
+            isSelected = false
         )
     }
 }
@@ -163,7 +244,8 @@ fun NoteScreenPreview() {
                                 name = "Tag 7"
                             )
                         )
-                    )
+                    ),
+                    isSelected = false
                 )
             }
         }

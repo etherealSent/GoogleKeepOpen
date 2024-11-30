@@ -40,6 +40,8 @@ fun ArchiveScreen(
     onFABClicked: () -> Unit,
     onNoteClicked: (NoteUi) -> Unit,
     notes: List<NoteUi>,
+    noteSelected: Boolean,
+    selectedNotes: List<NoteUi> = emptyList()
 ) {
     Scaffold(
         topBar = {
@@ -60,12 +62,16 @@ fun ArchiveScreen(
             ) {
                 categoryNotesBlock(
                     noteUis = notes.filter { it.pinned },
-                    onNoteClick = onNoteClicked
+                    onNoteClick = onNoteClicked,
+                    noteSelected = noteSelected,
+                    selectedNotes = selectedNotes
                 )
 
                 categoryNotesBlock(
                     noteUis = notes.filter { !it.pinned },
-                    onNoteClick = onNoteClicked
+                    onNoteClick = onNoteClicked,
+                    noteSelected = noteSelected,
+                    selectedNotes = selectedNotes
                 )
             }
         } else {
@@ -127,6 +133,8 @@ fun ArchiveScreenPreview() {
             onFABClicked = { /*TODO*/ },
             onNoteClicked = {},
             notes = listOf(),
+            noteSelected = false,
+            selectedNotes = listOf()
         )
     }
 }

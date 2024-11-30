@@ -40,6 +40,8 @@ fun BucketScreen(
     onFABClicked: () -> Unit,
     onNoteClicked: (NoteUi) -> Unit,
     notes: List<NoteUi>,
+    noteSelected: Boolean,
+    selectedNotes: List<NoteUi>
 ) {
     Scaffold(
         topBar = {
@@ -60,12 +62,16 @@ fun BucketScreen(
             ) {
                 categoryNotesBlock(
                     noteUis = notes.filter { it.pinned },
-                    onNoteClick = onNoteClicked
+                    onNoteClick = onNoteClicked,
+                    noteSelected = noteSelected,
+                    selectedNotes = selectedNotes
                 )
 
                 categoryNotesBlock(
                     noteUis = notes.filter { !it.pinned },
-                    onNoteClick = onNoteClicked
+                    onNoteClick = onNoteClicked,
+                    noteSelected = noteSelected,
+                    selectedNotes = selectedNotes
                 )
             }
         } else {
@@ -127,6 +133,8 @@ fun BucketScreenPreview() {
             onFABClicked = { /*TODO*/ },
             onNoteClicked = {},
             notes = listOf(),
+            noteSelected = false,
+            selectedNotes = listOf()
         )
     }
 }

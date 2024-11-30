@@ -7,7 +7,7 @@ data class EditTagsState(
     val isLoading: Boolean = false,
     val newTagName: String = "",
     val editingId: String = "",
-    val mutableTags: List<TagUi> = emptyList()
+    val mutableTags: List<TagUi> = emptyList(),
 )
 
 data class EditTagsScreenState(

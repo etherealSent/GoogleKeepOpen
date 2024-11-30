@@ -32,6 +32,7 @@ interface NoteRepository {
     suspend fun getOtherNotesFromPosition(fromPosition: Int): List<NoteDb>?
     suspend fun getPinnedNotesFromPosition(fromPosition: Int): List<NoteDb>?
     suspend fun updateNotes(notes: List<NoteDb>)
+    suspend fun getNotesByIds(ids: List<String>) : List<NoteDb>?
 }
 
 class NoteRepositoryImpl @Inject constructor(
@@ -72,6 +73,10 @@ class NoteRepositoryImpl @Inject constructor(
 
     override suspend fun updateNotes(notes: List<NoteDb>) {
         noteDao.updateNotes(notes)
+    }
+
+    override suspend fun getNotesByIds(ids: List<String>): List<NoteDb>? {
+        return noteDao.getNotesByIds(ids)
     }
 
     override suspend fun createNote(note: NoteDb) : String {

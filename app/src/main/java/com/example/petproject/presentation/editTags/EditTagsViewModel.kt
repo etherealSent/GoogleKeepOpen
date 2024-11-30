@@ -104,8 +104,6 @@ class EditTagsViewModel @Inject constructor(
         }
     }
 
-
-
     fun checkTag(): Boolean {
         return uiState.value.tags.map { it.name }.contains(screenState.value.newTagName)
     }

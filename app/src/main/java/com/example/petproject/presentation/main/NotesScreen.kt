@@ -25,6 +25,7 @@ import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -65,7 +66,8 @@ fun NotesScreen(
     onNoteSelected: (NoteUi) -> Unit,
     noteSelected: Boolean,
     selectedNotes: List<NoteUi>,
-    closeNoteSelection: () -> Unit
+    closeNoteSelection: () -> Unit,
+    pinSelectedNotes: () -> Unit
 ) {
     Scaffold(
         floatingActionButton = { FAB(onAddNote) },
@@ -83,6 +85,49 @@ fun NotesScreen(
                         }
                     },
                     title = { Text(text = "${selectedNotes.size}") },
+                    actions = {
+                        IconButton(
+                            onClick = pinSelectedNotes
+                        ) {
+                            if (selectedNotes.any {  !it.pinned }) {
+                                Icon(
+                                    ImageVector.vectorResource(R.drawable.keep_24dp_5f6368_fill0_wght400_grad0_opsz24), contentDescription = null
+                                )
+                            } else {
+                                Icon(
+                                    ImageVector.vectorResource(R.drawable.keep_24dp_5f6368_fill1_wght400_grad0_opsz24), contentDescription = null
+                                )
+                            }
+                        }
+                        IconButton(
+                            onClick = { /*TODO*/ }
+                        ) {
+                            Icon(
+                                ImageVector.vectorResource(R.drawable.add_alert_24dp_5f6368_fill0_wght400_grad0_opsz24), contentDescription = null
+                            )
+                        }
+                        IconButton(
+                            onClick = { /*TODO*/ }
+                        ) {
+                            Icon(
+                                ImageVector.vectorResource(R.drawable.palette_24dp_5f6368_fill0_wght400_grad0_opsz24), contentDescription = null
+                            )
+                        }
+                        IconButton(
+                            onClick = { /*TODO*/ }
+                        ) {
+                            Icon(
+                                ImageVector.vectorResource(R.drawable.label_24dp_e8eaed_fill0_wght400_grad0_opsz24), contentDescription = null
+                            )
+                        }
+                        IconButton(
+                            onClick = { /*TODO*/ }
+                        ) {
+                            Icon(
+                                Icons.Default.MoreVert, contentDescription = null
+                            )
+                        }
+                    }
                 )
             }
         }
@@ -147,7 +192,7 @@ fun NotesScreen(
                                         start = 16.dp,
                                         end = 16.dp,
                                         bottom = 12.dp,
-                                        top = 76.dp
+                                        top = if (!noteSelected) 76.dp else 8.dp
                                     )
                                 )
                             }
@@ -166,12 +211,18 @@ fun NotesScreen(
                         if (pinnedNotes.isNotEmpty()) {
                             Column {
                                 NotesCategoryName(
-                                    name = "Закреплённые", modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp, top = 76.dp)
+                                    name = "Закреплённые", modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp, top = if (!noteSelected) 76.dp else 8.dp)
                                 )
                                 LazyVerticalStaggeredGrid(
                                     columns = StaggeredGridCells.Fixed(2),
                                     content = {
-                                        categoryNotesBlock(pinnedNotes, onNoteClick, selectedNotes)
+                                        categoryNotesBlock(
+                                            noteUis = pinnedNotes,
+                                            onNoteClick = onNoteClick,
+                                            onNoteSelected = onNoteSelected,
+                                            noteSelected = noteSelected,
+                                            selectedNotes = selectedNotes
+                                        )
                                     },
                                     verticalItemSpacing = 8.dp,
                                     horizontalArrangement =  Arrangement.spacedBy(8.dp),
@@ -189,7 +240,12 @@ fun NotesScreen(
                                 LazyVerticalStaggeredGrid(
                                     columns = StaggeredGridCells.Fixed(2),
                                     content = {
-                                        categoryNotesBlock(otherNotes, onNoteClick, selectedNotes)
+                                        categoryNotesBlock(
+                                            noteUis = otherNotes,
+                                            onNoteClick = onNoteClick,
+                                            onNoteSelected = onNoteSelected,
+                                            noteSelected = noteSelected,
+                                            selectedNotes = selectedNotes)
                                     },
                                     verticalItemSpacing = 8.dp,
                                     horizontalArrangement =  Arrangement.spacedBy(8.dp),
@@ -200,12 +256,17 @@ fun NotesScreen(
                         } else if (otherNotes.isNotEmpty()) {
                             Column {
                                 NotesCategoryName(
-                                    name = "Другие", modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp, top = 76.dp)
+                                    name = "Другие", modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp, top = if (!noteSelected) 76.dp else 8.dp)
                                 )
                                 LazyVerticalStaggeredGrid(
                                     columns = StaggeredGridCells.Fixed(2),
                                     content = {
-                                        categoryNotesBlock(otherNotes, onNoteClick, selectedNotes)
+                                        categoryNotesBlock(
+                                            noteUis = otherNotes,
+                                            onNoteClick = onNoteClick,
+                                            onNoteSelected = onNoteSelected,
+                                            noteSelected = noteSelected,
+                                            selectedNotes = selectedNotes)
                                     },
                                     verticalItemSpacing = 8.dp,
                                     horizontalArrangement =  Arrangement.spacedBy(8.dp),
@@ -268,15 +329,32 @@ inline fun LazyListScope.categoryNotesBlock(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 inline fun LazyStaggeredGridScope.categoryNotesBlock(
     noteUis: List<NoteUi>,
     crossinline onNoteClick: (NoteUi) -> Unit,
-    selectedNotes: List<NoteUi>
+    selectedNotes: List<NoteUi>,
+    crossinline onNoteSelected: (NoteUi) -> Unit = {},
+    noteSelected: Boolean,
 ) {
     items(noteUis) { note ->
-        Note(modifier = Modifier
+        DragNote(modifier = Modifier
             .padding(bottom = 8.dp)
-            .clickable { onNoteClick(note) },note, isSelected = selectedNotes.contains(note))
+            .combinedClickable(
+                onClick = {
+                    if (noteSelected) {
+                        onNoteSelected(note)
+                    } else {
+                        onNoteClick(note)
+                    }
+                },
+                onLongClick = {
+                    onNoteSelected(note)
+                }
+            ),
+            noteUi = note,
+            isSelected = selectedNotes.contains(note)
+        )
     }
 }
 
@@ -447,7 +525,7 @@ fun MainScreenPreview() {
 
 
             ), onNavigationIconClicked = {}, onAddNote = {}, onNoteClick = {}, notesViewType = NotesViewType.Column, changeNotesViewType = {},
-            onSwap = {i,j ->}, onNoteSelected = {}, noteSelected = false, selectedNotes = listOf(), closeNoteSelection = {}
+            onSwap = {i,j ->}, onNoteSelected = {}, noteSelected = false, selectedNotes = listOf(), closeNoteSelection = {}, pinSelectedNotes = {}
         )
     }
 }

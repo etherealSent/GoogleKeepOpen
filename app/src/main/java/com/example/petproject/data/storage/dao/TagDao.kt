@@ -27,7 +27,7 @@ interface TagDao {
     @Query("SELECT * FROM tag")
     fun loadAllTags(): List<TagDb>
 
-    @Query("SELECT * FROM tag")
+    @Query("SELECT * FROM tag ORDER BY name ASC")
     fun observeTags(): Flow<List<TagDb>>
 
     @Query("SELECT * FROM tag WHERE tagId=:id")

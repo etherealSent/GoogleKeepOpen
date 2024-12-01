@@ -25,6 +25,7 @@ class MainActivity : ComponentActivity() {
                 PetNavGraph()
             }
         }
+        windowManager
         val settingsStore: SettingsStore by lazy {
             SettingsStore(baseContext)
         }

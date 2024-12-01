@@ -29,11 +29,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -120,7 +122,8 @@ fun CreateTagOption(
     editing: Boolean,
     tagName: String,
     onEditNewTagClicked: () -> Unit,
-    focusRequester: FocusRequester = remember { FocusRequester() }
+    focusRequester: FocusRequester = remember { FocusRequester() },
+    focusManager: FocusManager = LocalFocusManager.current
 ) {
     Column(Modifier.fillMaxWidth()) {
         if (editing) {
@@ -131,7 +134,11 @@ fun CreateTagOption(
             .padding(horizontal = 15.dp), verticalAlignment = Alignment.CenterVertically) {
 
             if (editing) {
-                IconButton(onClick = onCloseClicked) {
+                IconButton(onClick =
+                {
+                    onCloseClicked()
+                    focusManager.clearFocus()
+                }) {
                     Icon(
                         imageVector = ImageVector.vectorResource(id = R.drawable.close_24dp_e8eaed_fill0_wght400_grad0_opsz24),
                         contentDescription = "tag"
@@ -162,13 +169,18 @@ fun CreateTagOption(
                 ),
                 keyboardActions = KeyboardActions(
                     onDone = {
-                        focusRequester.freeFocus()
+                        onAddClicked()
+                        focusManager.clearFocus()
                     }
                 ),
                 singleLine = true
             )
             if (editing) {
-                IconButton(onClick = onAddClicked) {
+                IconButton(onClick =
+                {
+                    onAddClicked()
+                    focusManager.clearFocus()
+                }) {
                     Icon(imageVector = ImageVector.vectorResource(id = R.drawable.check_24dp_e8eaed_fill0_wght400_grad0_opsz24), contentDescription = "edit")
                 }
             }
@@ -187,7 +199,8 @@ fun TagOption(
     onCompleteClicked: () -> Unit,
     editing: Boolean,
     onEditTagClicked: () -> Unit,
-    focusRequester: FocusRequester = remember { FocusRequester() }
+    focusRequester: FocusRequester = remember { FocusRequester() },
+    focusManager: FocusManager = LocalFocusManager.current
 ) {
     Column(Modifier.fillMaxWidth()) {
         if (editing) {
@@ -230,7 +243,7 @@ fun TagOption(
                 keyboardActions = KeyboardActions(
                     onDone = {
                         onCompleteClicked()
-                        focusRequester.freeFocus()
+                        focusManager.clearFocus()
                     }
                 ),
                 singleLine = true
@@ -238,7 +251,7 @@ fun TagOption(
             if (editing) {
                 IconButton(onClick = {
                     onCompleteClicked()
-                    focusRequester.freeFocus()
+                    focusManager.clearFocus()
                 } ) {
                     Icon(imageVector = ImageVector.vectorResource(id = R.drawable.check_24dp_e8eaed_fill0_wght400_grad0_opsz24), contentDescription = "edit")
                 }

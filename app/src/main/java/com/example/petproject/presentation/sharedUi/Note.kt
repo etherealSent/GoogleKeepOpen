@@ -27,6 +27,11 @@ import androidx.compose.material3.windowsizeclass.WindowHeightSizeClass
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draw.clip
@@ -36,7 +41,10 @@ import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.MeasurePolicy
 import androidx.compose.ui.layout.MeasureResult
 import androidx.compose.ui.layout.MeasureScope
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
@@ -67,37 +75,21 @@ fun Note(
             heightPx.div(1.5).dp
         }
         WindowHeightSizeClass.Medium -> {
-            heightPx.div(3).dp
+            heightPx.div(1.5).dp
         }
         WindowHeightSizeClass.Expanded -> {
-            heightPx.div(2).dp
+            heightPx.div(3).dp
         }
         else -> {
             heightPx.div(3).dp
         }
     }
 
-    Layout(
-        content= {
-            NoteContainer(
-                modifier = modifier,
-                isSelected = isSelected,
-                noteUi = noteUi,
-                maxLines = 100
-            )
-        },
-        measurePolicy = object : MeasurePolicy {
-            override fun MeasureScope.measure(
-                measurables: List<Measurable>,
-                constraints: Constraints
-            ): MeasureResult {
-                val placeable = measurables.first().measure(constraints)
-                return layout(constraints.maxWidth, placeable.height) {
-                    placeable.place(0, 0)
-                    Log.d("Note", "Note height: ${placeable.height} ")
-                }
-            }
-        }
+    NoteContainer(
+        modifier = modifier,
+        isSelected = isSelected,
+        noteUi = noteUi,
+        noteHeight = noteHeight
     )
 }
 
@@ -106,8 +98,21 @@ fun NoteContainer(
     modifier: Modifier = Modifier,
     isSelected: Boolean,
     noteUi: NoteUi,
-    maxLines: Int = 1
+    noteHeight: Dp
 ) {
+
+    val textStyle = MaterialTheme.typography.bodySmall
+    val textMeasurer = rememberTextMeasurer()
+    val noteHeightMeasurement = remember(textStyle, textMeasurer) {
+        textMeasurer.measure(
+            text = "a",
+            style = textStyle.copy(textAlign = TextAlign.Center)
+        ).size.height
+    }
+
+    val contentHeight = (noteHeight - 36.dp - noteHeightMeasurement.dp)
+    val maxLine = contentHeight.div( noteHeightMeasurement).value.toInt()
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -146,7 +151,7 @@ fun NoteContainer(
             text = noteUi.content,
             style = MaterialTheme.typography.bodySmall,
             color = Color(0xFFDBE1E5),
-            maxLines = maxLines
+            maxLines = maxLine
         )
 
         Spacer(modifier = Modifier.height(10.dp))

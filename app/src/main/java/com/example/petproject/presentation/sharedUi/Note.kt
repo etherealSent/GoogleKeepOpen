@@ -1,7 +1,11 @@
 package com.example.petproject.presentation.sharedUi
 
 import android.content.ClipData
+import android.content.Context
 import android.content.res.Configuration
+import android.text.Layout
+import android.util.Log
+import android.view.WindowManager
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.draganddrop.dragAndDropSource
@@ -10,28 +14,105 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeightIn
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.WindowHeightSizeClass
+import androidx.compose.material3.windowsizeclass.WindowSizeClass
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasurePolicy
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import com.example.petproject.presentation.main.NotesViewType
 import com.example.petproject.presentation.model.NoteUi
 import com.example.petproject.presentation.model.TagUi
 import com.example.petproject.ui.theme.PetProjectTheme
 
+@OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
 fun Note(
     modifier: Modifier = Modifier,
     noteUi: NoteUi,
-    isSelected: Boolean
+    isSelected: Boolean,
+    notesViewType: NotesViewType = NotesViewType.Column,
+    ) {
+
+    val context = LocalContext.current
+    val displayMetrics = context.resources.displayMetrics
+    val heightPx = displayMetrics.heightPixels
+
+    val windowSizeClass = WindowSizeClass.calculateFromSize(size =DpSize(displayMetrics.widthPixels.dp, displayMetrics.heightPixels.dp))
+
+    val noteHeight = when(windowSizeClass.heightSizeClass) {
+        WindowHeightSizeClass.Compact -> {
+            heightPx.div(1.5).dp
+        }
+        WindowHeightSizeClass.Medium -> {
+            heightPx.div(1.5).dp
+        }
+        WindowHeightSizeClass.Expanded -> {
+            heightPx.div(3).dp
+        }
+        else -> {
+            heightPx.div(3).dp
+        }
+    }
+
+    NoteContainer(
+        modifier = modifier,
+        isSelected = isSelected,
+        noteUi = noteUi,
+        noteHeight = noteHeight
+    )
+}
+
+@Composable
+fun NoteContainer(
+    modifier: Modifier = Modifier,
+    isSelected: Boolean,
+    noteUi: NoteUi,
+    noteHeight: Dp
 ) {
+
+    val textStyle = MaterialTheme.typography.bodySmall
+    val textMeasurer = rememberTextMeasurer()
+    val noteHeightMeasurement = remember(textStyle, textMeasurer) {
+        textMeasurer.measure(
+            text = "a",
+            style = textStyle.copy(textAlign = TextAlign.Center)
+        ).size.height
+    }
+
+    val contentHeight = (noteHeight - 36.dp - noteHeightMeasurement.dp)
+    val maxLine = contentHeight.div( noteHeightMeasurement).value.toInt()
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -69,7 +150,8 @@ fun Note(
         Text(
             text = noteUi.content,
             style = MaterialTheme.typography.bodySmall,
-            color = Color(0xFFDBE1E5)
+            color = Color(0xFFDBE1E5),
+            maxLines = maxLine
         )
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -101,7 +183,7 @@ fun DragNote(
 //                }
 //            )
 //            },
-        ,isSelected = isSelected
+        ,isSelected = isSelected,
     )
 }
 

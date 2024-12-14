@@ -15,10 +15,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -38,6 +41,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -56,11 +60,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat.startActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.rememberAsyncImagePainter
 import com.example.petproject.R
+import com.example.petproject.presentation.main.ColorCircle
 import com.example.petproject.presentation.model.NoteUi
 import com.example.petproject.ui.theme.PetProjectTheme
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -121,8 +127,8 @@ fun EditNoteScreenWrapper(
         bottomSheetType = state.bottomSheetType,
         deleteNote = viewModel::deleteNote,
         archiveNote = viewModel::archiveNote,
-        copyNote = viewModel::copyNote
-//        formatLastUpdateTime = viewModel::formatLastUpdateTime
+        copyNote = viewModel::copyNote,
+        color = state.color
     )
 }
 
@@ -149,9 +155,10 @@ fun EditNoteScreen(
     isNewNote: Boolean,
     addNewPhotoPath: (String) -> Unit,
     bottomSheetType: BottomSheetType,
-    copyNote: () -> Unit
-//    formatLastUpdateTime: (Date) -> Unit
+    copyNote: () -> Unit,
+    color: Color
 ) {
+    val defaultBackground = MaterialTheme.colorScheme.background
 
     val pickPhoto = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) {
@@ -171,13 +178,15 @@ fun EditNoteScreen(
 
 
     Scaffold(
+        containerColor = if(color == Color.Transparent) defaultBackground else color,
         topBar = {
             EditNoteTopBar(
+                color = if(color == Color.Transparent) defaultBackground else color,
                 saveNote = saveNote,
                 onBack = onBack,
                 pinned = pinned,
                 onPinned = onPinned,
-                archiveNote
+                archiveNote = archiveNote
             )
         },
         bottomBar = {
@@ -195,6 +204,7 @@ fun EditNoteScreen(
 
         if (showBottomSheet) {
             ModalBottomSheet(
+                shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp),
                 onDismissRequest = {
                     updateShowBottomSheet(false, BottomSheetType.Add)
                 },
@@ -204,12 +214,12 @@ fun EditNoteScreen(
                 when(bottomSheetType) {
                     BottomSheetType.Add -> {
                         Column(
-                            modifier = Modifier.padding(top = 10.dp, start = 5.dp)
+                            modifier = Modifier.padding(top = 5.dp, start = 5.dp)
                         ) {
                             BottomSheetOption(
                                 icon = ImageVector.vectorResource(id = R.drawable.photo_camera_24dp_5f6368_fill0_wght400_grad0_opsz24),
                                 contentDescription = "Сделать снимок",
-                                text = "Делать снимок",
+                                text = "Сделать снимок",
                                 onClick = {
                                     openCamera()
                                     updateShowBottomSheet(false, BottomSheetType.Add)
@@ -243,7 +253,7 @@ fun EditNoteScreen(
                     }
                     BottomSheetType.MoreVert -> {
                         Column(
-                            modifier = Modifier.padding(top = 10.dp, start = 5.dp)
+                            modifier = Modifier.padding(top = 5.dp, start = 5.dp)
                         ) {
                             BottomSheetOption(
                                 icon = ImageVector.vectorResource(id = R.drawable.delete_24dp_e8eaed_fill0_wght400_grad0_opsz24),
@@ -288,6 +298,53 @@ fun EditNoteScreen(
                                 contentDescription = "Справка/отзыв",
                                 text = "Справка/отзыв"
                             )
+                        }
+                    }
+                    BottomSheetType.Palette -> {
+                        val items = listOf(
+                            MaterialTheme.colorScheme.background,
+                            Color(0xFF77172F),
+                            Color(0xFF672C19),
+                            Color(0xFF7C4A02),
+                            Color(0xFF284254),
+                            Color(0xFF226377),
+                            Color(0xFF0F625C),
+                            Color(0xFF274D3C),
+                            Color(0xFF482E5B),
+                            Color(0xFF6C3A4F),
+                            Color(0xFF4D4439),
+                            Color(0xFF232428)
+                        )
+                        Column(
+                            modifier = Modifier.padding(top = 5.dp, start = 5.dp)
+                        ) {
+                            Text(modifier = Modifier.padding(10.dp), text = "Цвет", style = MaterialTheme.typography.labelMedium)
+                            LazyRow {
+                               items(items) { color ->
+                                   ColorCircle(
+                                       modifier = Modifier.padding(end = 15.dp),
+                                       picked = color == Color(0xFF6C3A4F),
+                                       color = color,
+                                       onColorPicked = {
+                                           updateShowBottomSheet(false, BottomSheetType.Add)
+                                       }
+                                   )
+                               }
+                            }
+                            Text(modifier = Modifier.padding(10.dp), text = "Фон", style = MaterialTheme.typography.labelMedium)
+                            LazyRow {
+                                items(items) { color ->
+                                    ColorCircle(
+                                        modifier = Modifier.padding(end = 15.dp),
+                                        picked = color == Color(0xFF6C3A4F),
+                                        color = color,
+                                        onColorPicked = {
+                                            updateShowBottomSheet(false, BottomSheetType.Add)
+                                        }
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(10.dp))
                         }
                     }
                 }
@@ -355,22 +412,23 @@ fun BottomSheetOption(
     Row(modifier = modifier
         .clickable { onClick() }
         .fillMaxWidth()
-        .padding(bottom = 10.dp),
+        .padding(bottom = 5.dp),
         verticalAlignment = Alignment.CenterVertically) {
         Icon(
             modifier = Modifier
                 .padding(10.dp)
-                .size(28.dp),
+                .size(24.dp),
             imageVector = icon,
             contentDescription = contentDescription
         )
-        Text(text = text)
+        Text(text = text, fontSize = 16.sp, style = MaterialTheme.typography.labelMedium)
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditNoteTopBar(
+    color: Color,
     saveNote: (Date) -> Unit,
     onBack: () -> Unit,
     pinned: Boolean,
@@ -378,6 +436,7 @@ fun EditNoteTopBar(
     archiveNote: () -> Unit
 ) {
     TopAppBar(
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = color),
         title = {},
         navigationIcon = {
             IconButton(
@@ -424,7 +483,6 @@ fun EditNoteBottomBar(
     isNewNote: Boolean
 ) {
     BottomAppBar(
-        modifier = Modifier.background(Color(0xFF)),
         actions = {
             IconButton(
                 onClick = {
@@ -439,7 +497,9 @@ fun EditNoteBottomBar(
                 Icon(ImageVector.vectorResource(R.drawable.palette_24dp_5f6368_fill0_wght400_grad0_opsz24), contentDescription = "pin note")
             }
             IconButton(
-                onClick = {}
+                onClick = {
+                    updateShowBottomSheet(true, BottomSheetType.Palette)
+                }
             ) {
                 Icon(ImageVector.vectorResource(R.drawable.text_format_24dp_5f6368_fill0_wght400_grad0_opsz24), contentDescription = "pin note")
             }
@@ -483,7 +543,8 @@ fun EditNoteScreenPreview() {
             bottomSheetType = BottomSheetType.Add,
             deleteNote = {},
             archiveNote = {},
-            copyNote = {}
+            copyNote = {},
+            color = Color(0)
 //            formatLastUpdateTime = {}
         )
     }

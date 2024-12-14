@@ -1,5 +1,6 @@
 package com.example.petproject.presentation.editNote
 
+import androidx.compose.ui.graphics.Color
 import java.util.Date
 
 data class EditNoteState(
@@ -20,4 +21,5 @@ data class EditNoteState(
     val isDeleted: Boolean = false,
     val copiedId: String = "",
     val position: Int = 0,
+    val color: Color = Color(0)
 )

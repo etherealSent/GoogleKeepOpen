@@ -1,5 +1,6 @@
-package com.example.petproject.presentation.mappers
+package com.example.petproject.domain.mappers
 
+import androidx.compose.ui.graphics.Color
 import com.example.petproject.domain.entities.note.Note
 import com.example.petproject.presentation.model.NoteUi
 import javax.inject.Inject
@@ -16,7 +17,8 @@ class NoteToUiMapper @Inject constructor() : (Note) -> NoteUi {
             photoPaths = note.photoPaths,
             isArchived = note.isArchived,
             isDeleted = note.isDeleted,
-            position = note.position
+            position = note.position,
+            color = Color(note.color)
         )
     }
 }

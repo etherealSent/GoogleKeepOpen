@@ -2,8 +2,12 @@ package com.example.petproject.di
 
 import com.example.petproject.domain.repository.note.NoteRepository
 import com.example.petproject.domain.repository.note.TagRepository
+import com.example.petproject.domain.usecases.note.ArchiveNotesUseCase
+import com.example.petproject.domain.usecases.note.ArchiveNotesUseCaseImpl
 import com.example.petproject.domain.usecases.note.DeleteNoteUseCase
 import com.example.petproject.domain.usecases.note.DeleteNoteUseCaseImpl
+import com.example.petproject.domain.usecases.note.DeleteNotesUseCase
+import com.example.petproject.domain.usecases.note.DeleteNotesUseCaseImpl
 import com.example.petproject.domain.usecases.note.GetAmountOfOtherNotesUseCase
 import com.example.petproject.domain.usecases.note.GetAmountOfOtherNotesUseCaseImpl
 import com.example.petproject.domain.usecases.note.GetAmountOfPinnedNotesUseCase
@@ -22,6 +26,8 @@ import com.example.petproject.domain.usecases.tag.ObserveTagsUseCase
 import com.example.petproject.domain.usecases.tag.ObserveTagsUseCaseImpl
 import com.example.petproject.domain.usecases.note.SaveNoteUseCase
 import com.example.petproject.domain.usecases.note.SaveNoteUseCaseImpl
+import com.example.petproject.domain.usecases.note.UpdateNoteColorUseCase
+import com.example.petproject.domain.usecases.note.UpdateNoteColorUseCaseImpl
 import com.example.petproject.domain.usecases.note.UpdateNoteUseCase
 import com.example.petproject.domain.usecases.note.UpdateNoteUseCaseImpl
 import com.example.petproject.domain.usecases.note.UpdateNotesPositionsUseCase
@@ -153,5 +159,29 @@ object DomainModule {
         repository: NoteRepository
     ): PinNotesUseCase {
         return PinNotesUseCaseImpl(repository)
+    }
+
+    @Singleton
+    @Provides
+    fun archiveNotesUseCase(
+        repository: NoteRepository
+    ): ArchiveNotesUseCase {
+        return ArchiveNotesUseCaseImpl(repository)
+    }
+
+    @Singleton
+    @Provides
+    fun deleteNotesUseCase(
+        repository: NoteRepository
+    ): DeleteNotesUseCase {
+        return DeleteNotesUseCaseImpl(repository)
+    }
+
+    @Singleton
+    @Provides
+    fun updateNoteColorUseCase(
+        repository: NoteRepository
+    ): UpdateNoteColorUseCase {
+        return UpdateNoteColorUseCaseImpl(repository)
     }
 }

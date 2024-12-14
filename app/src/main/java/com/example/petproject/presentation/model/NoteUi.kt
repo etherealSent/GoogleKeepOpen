@@ -1,5 +1,6 @@
 package com.example.petproject.presentation.model
 
+import androidx.compose.ui.graphics.Color
 import java.util.Date
 
 data class NoteUi(
@@ -12,5 +13,6 @@ data class NoteUi(
     val photoPaths: List<String> = emptyList(),
     val isArchived: Boolean = false,
     val isDeleted: Boolean = false,
-    val position: Int = 0
+    val position: Int = 0,
+    val color: Color = Color.Transparent
 )

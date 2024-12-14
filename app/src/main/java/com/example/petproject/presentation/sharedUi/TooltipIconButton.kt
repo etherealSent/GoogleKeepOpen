@@ -34,7 +34,7 @@ fun TooltipIconButton(
 ) {
     val tooltipState = rememberTooltipState()
     TooltipBox(
-        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
         tooltip = {
             PlainTooltip(modifier = tooltipModifier) { Text(text = tooltipText, fontSize = 14.sp, modifier = Modifier.padding(4.dp)) }
                   },

@@ -14,10 +14,13 @@ import com.example.petproject.data.storage.entities.TagNoteCrossRef
 @Database(
     entities = [NoteDb::class, TagDb::class,
         TagNoteCrossRef::class],
-    version = 15,
+    version = 16,
     exportSchema = false
     )
-@TypeConverters(DataConverters::class, PhotoPathsConverters::class)
+@TypeConverters(
+    DataConverters::class,
+    PhotoPathsConverters::class,
+)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun noteDao(): NoteDao
     abstract fun tagDao(): TagDao

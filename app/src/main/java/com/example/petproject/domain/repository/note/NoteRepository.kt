@@ -1,5 +1,6 @@
 package com.example.petproject.domain.repository.note
 
+import android.util.Log
 import com.example.petproject.data.storage.dao.NoteDao
 import com.example.petproject.data.storage.entities.NoteDb
 import com.example.petproject.data.storage.mappers.note.NoteDbToDomainMapper
@@ -104,6 +105,7 @@ class NoteRepositoryImpl @Inject constructor(
 
     override suspend fun updateNote(note: NoteDb) {
         noteDao.upsertNote(note)
+        Log.d("NoteRepository", "updateNote: $note")
     }
 
     override fun getNotesWithTagsStream(): Flow<List<NoteWithTags>> {

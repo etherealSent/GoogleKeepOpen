@@ -11,5 +11,6 @@ data class Note(
     val photoPaths: List<String> = emptyList(),
     val isArchived: Boolean = false,
     val isDeleted: Boolean = false,
-    val position: Int = 0
+    val position: Int = 0,
+    val color: Int = 0
 )

@@ -18,7 +18,9 @@ class NoteWithTagsDbToDomainMapper @Inject constructor() : (NoteWithTagsDb) -> N
                 lastUpdate = noteWithTagsDb.noteDb.lastUpdate,
                 photoPaths = noteWithTagsDb.noteDb.photoPaths,
                 isArchived = noteWithTagsDb.noteDb.isArchived,
-                isDeleted = noteWithTagsDb.noteDb.isDeleted
+                isDeleted = noteWithTagsDb.noteDb.isDeleted,
+                position = noteWithTagsDb.noteDb.position,
+                color = noteWithTagsDb.noteDb.color,
             ),
             tags = noteWithTagsDb.tagDbs.map { tagDb ->
                 Tag(tagDb.name)

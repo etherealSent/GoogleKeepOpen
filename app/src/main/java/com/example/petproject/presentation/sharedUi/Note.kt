@@ -7,6 +7,7 @@ import android.text.Layout
 import android.util.Log
 import android.view.WindowManager
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.draganddrop.dragAndDropSource
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -45,6 +46,7 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
@@ -117,6 +119,7 @@ fun NoteContainer(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(5.dp))
+            .background(noteUi.color)
             .let {
                 if (isSelected) {
                     it.border(
@@ -151,7 +154,8 @@ fun NoteContainer(
             text = noteUi.content,
             style = MaterialTheme.typography.bodySmall,
             color = Color(0xFFDBE1E5),
-            maxLines = maxLine
+            maxLines = maxLine,
+            overflow = TextOverflow.Ellipsis
         )
 
         Spacer(modifier = Modifier.height(10.dp))

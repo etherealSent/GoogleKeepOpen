@@ -1,6 +1,8 @@
 package com.example.petproject.presentation.editNote
 
 import android.util.Log
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -95,7 +97,8 @@ class EditNoteViewModel @Inject constructor(
                             photoPaths,
                             isArchived,
                             isDeleted,
-                            gotInListPosition + 1
+                            gotInListPosition + 1,
+                            color
                         )
                     }
                 )
@@ -136,14 +139,14 @@ class EditNoteViewModel @Inject constructor(
         viewModelScope.launch {
 
             updateNotesPositionsUseCase.incNotesPositions(
-                fromPosition = _uiState.value.position + 1,
-                pinned = initState.pinned
+                fromPosition = 1,
+                pinned = false
             )
 
             val id = saveNoteUseCase.saveNote(
                 noteToDomainMapper(
                     _uiState.value.run {
-                        NoteUi(id = "", title, content, listOf(), pinned, lastUpdate, photoPaths, isArchived, isDeleted, position + 1)
+                        NoteUi(id = "", title, content, listOf(), false, lastUpdate, photoPaths, isArchived, isDeleted, 1)
                     }
                 )
             )
@@ -222,7 +225,8 @@ class EditNoteViewModel @Inject constructor(
                                 photoPaths = photoPaths,
                                 isArchived = isArchived,
                                 isDeleted = isDeleted,
-                                position = newPosition
+                                position = newPosition,
+                                color = color.toArgb()
                             )
                         }
                     )
@@ -239,7 +243,8 @@ class EditNoteViewModel @Inject constructor(
                                 photoPaths = photoPaths,
                                 isArchived = isArchived,
                                 isDeleted = isDeleted,
-                                position = initState.position
+                                position = initState.position,
+                                color = color.toArgb()
                             )
                         }
                     )
@@ -273,7 +278,8 @@ class EditNoteViewModel @Inject constructor(
                             photoPaths = note.photoPaths,
                             isArchived = note.isArchived,
                             isDeleted = note.isDeleted,
-                            position = note.position
+                            position = note.position,
+                            color = Color(note.color)
                         )
                     }
                     initState = EditNoteState(
@@ -286,10 +292,9 @@ class EditNoteViewModel @Inject constructor(
                         photoPaths = note.photoPaths,
                         isArchived = note.isArchived,
                         isDeleted = note.isDeleted,
-                        position = note.position
+                        position = note.position,
+                        color = Color(note.color)
                     )
-                    Log.d("HAHAHH2", "pos ${initState.position}")
-
                 } else {
                     _uiState.update {
                         it.copy(

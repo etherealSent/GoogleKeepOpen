@@ -1,5 +1,6 @@
 package com.example.petproject.presentation.main
 
+import android.content.Intent
 import android.content.res.Configuration
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -14,11 +15,14 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
@@ -32,13 +36,21 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Email
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.derivedStateOf
@@ -54,14 +66,20 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import com.example.petproject.R
 import com.example.petproject.presentation.model.NoteUi
 import com.example.petproject.presentation.model.TagUi
 import com.example.petproject.ui.theme.PetProjectTheme
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.PopupProperties
 import com.example.petproject.presentation.sharedUi.DragNote
 import com.example.petproject.presentation.sharedUi.FAB
 import com.example.petproject.presentation.sharedUi.Note
@@ -85,74 +103,159 @@ fun NotesScreen(
     noteSelected: Boolean,
     selectedNotes: List<NoteUi>,
     closeNoteSelection: () -> Unit,
-    pinSelectedNotes: () -> Unit
+    pinSelectedNotes: () -> Unit,
+    menuExpanded: Boolean,
+    onExpandMenu: () -> Unit,
+    archiveNotes: () -> Unit,
+    deleteNotes: () -> Unit,
+    copyNote: () -> Unit,
+    updateColorDialog: () -> Unit,
+    onColorPicked: (Color) -> Unit,
+    isColorDialog: Boolean,
+    pickedColor: Color
 ) {
+
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+
+    val context = LocalContext.current
+
     Scaffold(
         floatingActionButton = { FAB(onAddNote) },
         topBar = {
             if (noteSelected) {
-                TopAppBar(
-                    navigationIcon = {
-                        IconButton(
-                            onClick = closeNoteSelection
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "close"
+                Box(Modifier.fillMaxWidth()) {
+                    // offset не дает выйти за пределы топ бар нужен другой способ
+                    DropdownMenu(
+                        modifier = Modifier.width(IntrinsicSize.Max),
+                        expanded = menuExpanded,
+                        onDismissRequest = onExpandMenu,
+                        offset = DpOffset(screenWidth, -(TopAppBarDefaults.TopAppBarExpandedHeight)),
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Поместить в архив", style = MaterialTheme.typography.bodyLarge) },
+                            onClick = {
+                                archiveNotes()
+                                onExpandMenu()
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(text = "Удалить", style = MaterialTheme.typography.bodyLarge) },
+                            onClick = {
+                                deleteNotes()
+                                onExpandMenu()
+                            },
+                        )
+                        if (selectedNotes.size == 1) {
+                            DropdownMenuItem(
+                                text = { Text("Скопировать", style = MaterialTheme.typography.bodyLarge) },
+                                onClick = {
+                                    copyNote()
+                                    onExpandMenu()
+                                },
                             )
                         }
-                    },
-                    title = { Text(text = "${selectedNotes.size}") },
-                    actions = {
-                        IconButton(
-                            onClick = pinSelectedNotes
-                        ) {
-                            if (selectedNotes.any {  !it.pinned }) {
+                        if (selectedNotes.size == 1) {
+                            DropdownMenuItem(
+                                text = { Text("Отправить", style = MaterialTheme.typography.bodyLarge) },
+                                onClick = {
+                                    context.startActivity( Intent.createChooser(
+                                        Intent().apply {
+                                            action = Intent.ACTION_SEND
+                                            putExtra(Intent.EXTRA_TEXT, selectedNotes[0].content)
+                                            type = "text/plain"
+                                        },
+                                        null
+                                    ))
+                                    onExpandMenu()
+                                },
+                            )
+                        }
+                        DropdownMenuItem(
+                            text = { Text("Скопировать в Google Документы", style = MaterialTheme.typography.bodyLarge, maxLines = 1) },
+                            onClick = { /* Handle send feedback! */ },
+                        )
+                    }
+                    TopAppBar(
+                        navigationIcon = {
+                            IconButton(
+                                onClick = closeNoteSelection
+                            ) {
                                 Icon(
-                                    ImageVector.vectorResource(R.drawable.keep_24dp_5f6368_fill0_wght400_grad0_opsz24), contentDescription = null
-                                )
-                            } else {
-                                Icon(
-                                    ImageVector.vectorResource(R.drawable.keep_24dp_5f6368_fill1_wght400_grad0_opsz24), contentDescription = null
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "close"
                                 )
                             }
+                        },
+                        title = { Text(text = "${selectedNotes.size}") },
+                        actions = {
+                            Box {
+                                Row {
+                                    IconButton(
+                                        onClick = pinSelectedNotes
+                                    ) {
+                                        if (selectedNotes.any { !it.pinned }) {
+                                            Icon(
+                                                ImageVector.vectorResource(R.drawable.keep_24dp_5f6368_fill0_wght400_grad0_opsz24),
+                                                contentDescription = null
+                                            )
+                                        } else {
+                                            Icon(
+                                                ImageVector.vectorResource(R.drawable.keep_24dp_5f6368_fill1_wght400_grad0_opsz24),
+                                                contentDescription = null
+                                            )
+                                        }
+                                    }
+                                    IconButton(
+                                        onClick = { /*TODO*/ }
+                                    ) {
+                                        Icon(
+                                            ImageVector.vectorResource(R.drawable.add_alert_24dp_5f6368_fill0_wght400_grad0_opsz24),
+                                            contentDescription = null
+                                        )
+                                    }
+                                    IconButton(
+                                        onClick = updateColorDialog
+                                    ) {
+                                        Icon(
+                                            ImageVector.vectorResource(R.drawable.palette_24dp_5f6368_fill0_wght400_grad0_opsz24),
+                                            contentDescription = null
+                                        )
+                                    }
+                                    IconButton(
+                                        onClick = { /*TODO*/ }
+                                    ) {
+                                        Icon(
+                                            ImageVector.vectorResource(R.drawable.label_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+                                            contentDescription = null
+                                        )
+                                    }
+                                    IconButton(
+                                        onClick = onExpandMenu
+                                    ) {
+                                        Icon(
+                                            Icons.Default.MoreVert, contentDescription = null
+                                        )
+                                    }
+                                }
+                            }
                         }
-                        IconButton(
-                            onClick = { /*TODO*/ }
-                        ) {
-                            Icon(
-                                ImageVector.vectorResource(R.drawable.add_alert_24dp_5f6368_fill0_wght400_grad0_opsz24), contentDescription = null
-                            )
-                        }
-                        IconButton(
-                            onClick = { /*TODO*/ }
-                        ) {
-                            Icon(
-                                ImageVector.vectorResource(R.drawable.palette_24dp_5f6368_fill0_wght400_grad0_opsz24), contentDescription = null
-                            )
-                        }
-                        IconButton(
-                            onClick = { /*TODO*/ }
-                        ) {
-                            Icon(
-                                ImageVector.vectorResource(R.drawable.label_24dp_e8eaed_fill0_wght400_grad0_opsz24), contentDescription = null
-                            )
-                        }
-                        IconButton(
-                            onClick = { /*TODO*/ }
-                        ) {
-                            Icon(
-                                Icons.Default.MoreVert, contentDescription = null
-                            )
-                        }
-                    }
-                )
+                    )
+                }
             }
         }
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
             val pinnedNotes = notes.filter { it.pinned }
             val otherNotes = notes.filter { !it.pinned }
+
+            if (isColorDialog) {
+                ColorDialog(
+                    onColorPicked = onColorPicked,
+                    onDismissRequest = updateColorDialog,
+                    pickedColor = pickedColor
+                )
+            }
 
             when (notesViewType) {
                 NotesViewType.Column -> {
@@ -551,7 +654,9 @@ fun MainScreenPreview() {
 
 
             ), onNavigationIconClicked = {}, onAddNote = {}, onNoteClick = {}, notesViewType = NotesViewType.Column, changeNotesViewType = {},
-            onSwap = {i,j ->}, onNoteSelected = {}, noteSelected = false, selectedNotes = listOf(), closeNoteSelection = {}, pinSelectedNotes = {}
+            onSwap = {i,j ->}, onNoteSelected = {}, noteSelected = true, selectedNotes = listOf(), closeNoteSelection = {}, pinSelectedNotes = {},
+            menuExpanded = false, onExpandMenu = {}, archiveNotes = {}, deleteNotes = {}, copyNote = {}, onColorPicked = {}, isColorDialog = true,
+            pickedColor = Color(0xFF77172F), updateColorDialog = {}
         )
     }
 }

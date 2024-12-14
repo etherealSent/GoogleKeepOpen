@@ -1,5 +1,6 @@
 package com.example.petproject.data.storage.mappers.note
 
+import androidx.compose.ui.graphics.Color
 import com.example.petproject.data.storage.entities.NoteDb
 import com.example.petproject.domain.entities.note.Note
 import javax.inject.Inject
@@ -15,7 +16,8 @@ class NoteDbToDomainMapper @Inject constructor() : (NoteDb) -> Note {
             photoPaths = noteDb.photoPaths,
             isArchived = noteDb.isArchived,
             isDeleted = noteDb.isDeleted,
-            position = noteDb.position
+            position = noteDb.position,
+            color = noteDb.color
         )
     }
 }

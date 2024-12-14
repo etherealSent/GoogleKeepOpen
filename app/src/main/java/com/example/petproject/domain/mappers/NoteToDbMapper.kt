@@ -15,7 +15,8 @@ class NoteToDbMapper @Inject constructor() : (Note) -> NoteDb {
             photoPaths = note.photoPaths,
             isArchived = note.isArchived,
             isDeleted = note.isDeleted,
-            position = note.position
+            position = note.position,
+            color = note.color
         )
     }
 }

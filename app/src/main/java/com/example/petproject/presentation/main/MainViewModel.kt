@@ -1,18 +1,22 @@
 package com.example.petproject.presentation.main
 
+import android.util.Log
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.petproject.R
-import com.example.petproject.domain.entities.note.Note
 import com.example.petproject.domain.entities.note.NoteWithTags
 import com.example.petproject.domain.entities.tag.Tag
-import com.example.petproject.domain.usecases.note.ObserveNotesUseCase
+import com.example.petproject.domain.usecases.note.ArchiveNotesUseCase
+import com.example.petproject.domain.usecases.note.DeleteNotesUseCase
 import com.example.petproject.domain.usecases.note.ObserveNotesWithTagsUseCase
 import com.example.petproject.domain.usecases.note.PinNotesUseCase
 import com.example.petproject.domain.usecases.note.SaveNoteUseCase
+import com.example.petproject.domain.usecases.note.UpdateNoteColorUseCase
+import com.example.petproject.domain.usecases.note.UpdateNotesPositionsUseCase
 import com.example.petproject.domain.usecases.tag.ObserveTagsUseCase
 import com.example.petproject.presentation.mappers.NoteToDomainMapper
-import com.example.petproject.presentation.mappers.NoteToUiMapper
 import com.example.petproject.presentation.mappers.NoteWithTagsToUiMapper
 import com.example.petproject.presentation.mappers.TagToUiMapper
 import com.example.petproject.presentation.model.NoteUi
@@ -24,7 +28,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -38,7 +41,12 @@ class MainViewModel @Inject constructor(
     private val tagToUiMapper: TagToUiMapper,
     private val observeNotesWithTagsUseCase: ObserveNotesWithTagsUseCase,
     private val pinNotesUseCase: PinNotesUseCase,
-    private val observeTagsUseCase: ObserveTagsUseCase
+    private val observeTagsUseCase: ObserveTagsUseCase,
+    private val archiveNotesUseCase: ArchiveNotesUseCase,
+    private val deleteNotesUseCase: DeleteNotesUseCase,
+    private val updateNotesPositionsUseCase: UpdateNotesPositionsUseCase,
+    private val saveNoteUseCase: SaveNoteUseCase,
+    private val updateNoteColorUseCase: UpdateNoteColorUseCase
     ) : ViewModel() {
 
     private val _isLoading = MutableStateFlow(false)
@@ -63,6 +71,7 @@ class MainViewModel @Inject constructor(
             }
             is Async.Error -> MainState()
             is Async.Success -> {
+                Log.d("MainViewModel", "uiState: ${notes.data}")
 
                 val notesWithTags = notes.data.map(noteWithTagsToUiMapper)
                 val tagsData: List<TagUi>
@@ -101,6 +110,27 @@ class MainViewModel @Inject constructor(
         _uiMainState.update {
             it.copy(
                 notesViewType = if (it.notesViewType == NotesViewType.Column) NotesViewType.Grid else NotesViewType.Column
+            )
+        }
+    }
+
+    fun onColorPicked(color: Color) {
+        val selectedNote = _uiMainState.value.notesSelected[0]
+        viewModelScope.launch {
+            updateNoteColorUseCase.updateNoteColor(
+                noteToDomainMapper(selectedNote), color.toArgb()
+            )
+            showColorDialog()
+            resetSelectedNotes()
+        }
+        Log.d("MainViewModel", "onColorPicked: ${color.toArgb()}")
+    }
+
+    fun showColorDialog() {
+        _uiMainState.update {
+            it.copy(
+               showColorDialog = !_uiMainState.value.showColorDialog,
+                pickedColor = if(it.notesSelected.isNotEmpty()) it.notesSelected[0].color else Color.Transparent
             )
         }
     }
@@ -165,14 +195,51 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    fun expandMenu() {
+        _uiMainState.update {
+            it.copy(
+                menuExpanded = !it.menuExpanded
+            )
+        }
+    }
+
+    fun archiveNotes() {
+        viewModelScope.launch {
+            archiveNotesUseCase.archiveNotes(_uiMainState.value.notesSelected.map { it.id })
+            resetSelectedNotes()
+        }
+    }
+
+    fun deleteNotes() {
+        viewModelScope.launch {
+            deleteNotesUseCase.deleteNotes(_uiMainState.value.notesSelected.map { it.id })
+            resetSelectedNotes()
+        }
+    }
+
+    fun copyNote() {
+        viewModelScope.launch {
+            updateNotesPositionsUseCase.incNotesPositions(
+                fromPosition = 1,
+                pinned = false
+            )
+
+            saveNoteUseCase.saveNote(
+                noteToDomainMapper(
+                    _uiMainState.value.notesSelected[0].run {
+                        NoteUi(id = "", title, content, listOf(), false, lastUpdate, photoPaths, isArchived, isDeleted, 1, color)
+                    }
+                )
+            )
+            resetSelectedNotes()
+        }
+    }
+
     fun pinNotes() {
         viewModelScope.launch {
             val notes = _uiMainState.value.notesSelected.map { noteToDomainMapper(it) }
             pinNotesUseCase.pinNotes(notes,  _uiMainState.value.notesSelected.any { !it.pinned })
+            resetSelectedNotes()
         }
-        resetSelectedNotes()
     }
 }
-
-// all fixed
-// new gets new pos

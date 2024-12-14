@@ -28,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -84,7 +85,16 @@ fun MainScreenWrapper(
         noteSelected = state.uiMainState.noteSelected,
         selectedNotes = state.uiMainState.notesSelected,
         closeNoteSelection = viewModel::closeNoteSelection,
-        pinNotes = viewModel::pinNotes
+        pinNotes = viewModel::pinNotes,
+        expanded = state.uiMainState.menuExpanded,
+        onExpandMenu = viewModel::expandMenu,
+        archiveNotes = viewModel::archiveNotes,
+        deleteNotes = viewModel::deleteNotes,
+        copyNote = viewModel::copyNote,
+        updateColorDialog = viewModel::showColorDialog,
+        onColorPicked = viewModel::onColorPicked,
+        pickedColor = state.uiMainState.pickedColor,
+        showColorDialog = state.uiMainState.showColorDialog
     )
 }
 
@@ -111,7 +121,16 @@ fun MainNavigationDrawer(
     onNoteSelected: (NoteUi) -> Unit,
     selectedNotes: List<NoteUi>,
     closeNoteSelection: () -> Unit,
-    pinNotes: () -> Unit
+    pinNotes: () -> Unit,
+    expanded: Boolean,
+    onExpandMenu: () -> Unit,
+    archiveNotes: () -> Unit,
+    deleteNotes: () -> Unit,
+    copyNote: () -> Unit,
+    onColorPicked: (Color) -> Unit,
+    updateColorDialog: () -> Unit,
+    pickedColor: Color,
+    showColorDialog: Boolean
 ) {
     val upNavigationItems = listOf(
         NavigationItem(
@@ -332,7 +351,16 @@ fun MainNavigationDrawer(
                     onNoteSelected = onNoteSelected,
                     selectedNotes = selectedNotes,
                     closeNoteSelection = closeNoteSelection,
-                    pinSelectedNotes = pinNotes
+                    pinSelectedNotes = pinNotes,
+                    menuExpanded = expanded,
+                    onExpandMenu = onExpandMenu,
+                    archiveNotes = archiveNotes,
+                    deleteNotes = deleteNotes,
+                    copyNote = copyNote,
+                    updateColorDialog = updateColorDialog,
+                    onColorPicked = onColorPicked,
+                    pickedColor = pickedColor,
+                    isColorDialog = showColorDialog
                 )
             }
             MainScreenType.ByTag -> {
@@ -417,7 +445,16 @@ fun MainNavigationDrawerPreview() {
             noteSelected = false,
             selectedNotes = listOf(),
             closeNoteSelection = {},
-            pinNotes = {}
+            pinNotes = {},
+            expanded = false,
+            onExpandMenu = {},
+            archiveNotes = {},
+            deleteNotes = {},
+            copyNote = {},
+            pickedColor = Color.Transparent,
+            onColorPicked = {},
+            showColorDialog = false,
+            updateColorDialog = {}
         )
     }
 }

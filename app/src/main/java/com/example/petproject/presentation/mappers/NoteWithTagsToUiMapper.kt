@@ -1,5 +1,6 @@
 package com.example.petproject.presentation.mappers
 
+import androidx.compose.ui.graphics.Color
 import com.example.petproject.domain.entities.note.NoteWithTags
 import com.example.petproject.presentation.model.NoteUi
 import com.example.petproject.presentation.model.TagUi
@@ -22,7 +23,8 @@ class NoteWithTagsToUiMapper @Inject constructor() : (NoteWithTags) -> NoteUi {
             photoPaths = note.note.photoPaths,
             isArchived = note.note.isArchived,
             isDeleted = note.note.isDeleted,
-            position = note.note.position
+            position = note.note.position,
+            color = Color(note.note.color)
         )
     }
 }

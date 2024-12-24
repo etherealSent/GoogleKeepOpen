@@ -12,14 +12,18 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -32,10 +36,21 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridScope
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Settings
@@ -45,12 +60,20 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
+import androidx.compose.material3.SearchBarDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarDefaults.TopAppBarExpandedHeight
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.derivedStateOf
@@ -58,21 +81,33 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.traversalIndex
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import com.example.petproject.R
 import com.example.petproject.presentation.model.NoteUi
@@ -245,10 +280,10 @@ fun NotesScreen(
             }
         }
     ) { innerPadding ->
-        Box(modifier = Modifier.padding(innerPadding)) {
+        Surface(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
             val pinnedNotes = notes.filter { it.pinned }
             val otherNotes = notes.filter { !it.pinned }
-
+            val appBarHeight = 200.dp
             if (isColorDialog) {
                 ColorDialog(
                     onColorPicked = onColorPicked,
@@ -256,18 +291,83 @@ fun NotesScreen(
                     pickedColor = pickedColor
                 )
             }
+            val appBarMaxHeightPx = with(LocalDensity.current) { appBarHeight.roundToPx() }
+            val connection = remember(appBarMaxHeightPx) {
+                CollapsingAppBarNestedScrollConnection(appBarMaxHeightPx)
+            }
 
             when (notesViewType) {
                 NotesViewType.Column -> {
-
                     val lazyListState = rememberLazyListState()
+                    val textFieldState = remember { mutableStateOf("") }
+                    var expanded by rememberSaveable { mutableStateOf(false) }
 
-                    Box {
+                    Box(Modifier.padding(horizontal = 10.dp).nestedScroll(connection)) {
+                        if (selectedNotes.isEmpty()) {
+                            SearchBar (
+                                modifier = Modifier.offset { IntOffset(0,-45 + connection.appBarOffset) },
+                                inputField = {
+                                    SimpleTextField(
+                                        modifier = Modifier.height(45.dp).padding(start = 10.dp),
+                                        value = textFieldState.value,
+                                        onValueChange = { textFieldState.value = it },
+                                        placeholderText = "Искать в заметках",
+                                        leadingIcon = {
+                                            IconButton(onClick = onNavigationIconClicked) {
+                                                Icon(modifier = Modifier.padding(end = 10.dp).size(20.dp), tint = Color(0xFFC0CBD1 ),
+                                                    imageVector = ImageVector.vectorResource(id = R.drawable.menu_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+                                                    contentDescription = "open side-bar"
+                                                )
+                                            }
+                                        },
+                                        trailingIcon = {
+                                            when(notesViewType) {
+                                                NotesViewType.Column -> {
+                                                    TooltipIconButton(
+                                                        tooltipText = "Один столбец",
+                                                        iconContentDescription = "change note display type to one column",
+                                                        iconResource = R.drawable.splitscreen_24dp_e8eaed_fill0_wght400_grad0_opsz24,
+                                                        onClick = changeNotesViewType,
+                                                        tooltipModifier = Modifier.padding(top = 8.dp)
+                                                    )
+                                                }
+                                                NotesViewType.Grid -> {
+                                                    TooltipIconButton(
+                                                        tooltipText = "Несколько столбцов",
+                                                        iconContentDescription = "change note display type to several columns",
+                                                        iconResource = R.drawable.grid_view_24dp_e8eaed_fill0_wght400_grad0_opsz24,
+                                                        onClick = changeNotesViewType,
+                                                        tooltipModifier = Modifier.padding(top = 8.dp)
+                                                    )
+                                                }
+                                            }
+                                            Icon(modifier = Modifier.padding(end = 10.dp).size(20.dp),
+                                                imageVector = Icons.Default.AccountCircle,
+                                                contentDescription = null
+                                            )
+                                        },
+                                    )
+//                                    SearchBarDefaults.InputField(
+//                                        state = textFieldState,
+//                                        c,
+//                                        onSearch = { expanded = false },
+//                                        expanded = expanded,
+//                                        onExpandedChange = { expanded = it },
+//                                        placeholder = { Text("Hinted search text") },
+//                                        leadingIcon = { Icon(modifier = Modifier.size(20.dp), imageVector = Icons.Default.Search, contentDescription = null) },
+//                                        trailingIcon = { Icon(modifier = Modifier.size(20.dp), imageVector = Icons.Default.MoreVert, contentDescription = null) },
+//                                    )
+                                },
+                                expanded = expanded,
+                                onExpandedChange = { expanded = it },
+                            ) {
+                                // #TODO()
+                            }
+                        }
                         LazyColumn(
                             state = lazyListState,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 8.dp)
                         ) {
                             if (pinnedNotes.isNotEmpty()) {
                                 item {
@@ -407,26 +507,76 @@ fun NotesScreen(
                     }
                 }
             }
-            AnimatedVisibility(
-                visible = !noteSelected,
-                enter = slideInVertically { fullHeight -> -fullHeight },
-                exit = slideOutVertically { fullHeight -> -fullHeight }
-            ) {
-                SearchBar(modifier = Modifier
-                    .background(Color.Transparent.copy(0.1f))
-                    .padding(start = 20.dp, end = 20.dp, top = 12.dp),
-                    onNavigationIconClicked = onNavigationIconClicked,
-                    notesViewType = notesViewType,
-                    changeNotesViewType = changeNotesViewType
-                )
-            }
+//            AnimatedVisibility(
+//                visible = !noteSelected,
+//                enter = slideInVertically { fullHeight -> -fullHeight },
+//                exit = slideOutVertically { fullHeight -> -fullHeight }
+//            ) {
+//                SearchBar(modifier = Modifier
+//                    .background(Color.Transparent.copy(0.1f))
+//                    .padding(start = 20.dp, end = 20.dp, top = 12.dp),
+//                    onNavigationIconClicked = onNavigationIconClicked,
+//                    notesViewType = notesViewType,
+//                    changeNotesViewType = changeNotesViewType
+//                )
+//            }
         }
     }
 }
 
 @Composable
-fun NotesTopBar() {
-
+fun SimpleTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    readOnly: Boolean = false,
+    textStyle: TextStyle = LocalTextStyle.current,
+    leadingIcon: @Composable (() -> Unit)? = null,
+    trailingIcon: @Composable (() -> Unit)? = null,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    keyboardActions: KeyboardActions = KeyboardActions(),
+    singleLine: Boolean = false,
+    maxLines: Int = Int.MAX_VALUE,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    placeholderText: String = "",
+    fontSize: TextUnit = MaterialTheme.typography.bodyMedium.fontSize,
+    onTextLayout: (TextLayoutResult) -> Unit = {},
+    cursorBrush: Brush = SolidColor(Color.Black),
+) {
+    BasicTextField(modifier = modifier
+        .fillMaxWidth(),
+        value = value,
+        onValueChange = onValueChange,
+        singleLine = singleLine,
+        maxLines = maxLines,
+        enabled = enabled,
+        readOnly = readOnly,
+        interactionSource = interactionSource,
+        textStyle = textStyle,
+        visualTransformation = visualTransformation,
+        keyboardOptions = keyboardOptions,
+        keyboardActions = keyboardActions,
+        onTextLayout = onTextLayout,
+        cursorBrush = cursorBrush,
+        decorationBox = { innerTextField ->
+            Row(
+                modifier,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (leadingIcon != null) leadingIcon()
+                Box(Modifier.weight(1f)) {
+                    if (value.isEmpty()) Text(
+                        placeholderText,
+                        style = textStyle
+                    )
+                    innerTextField()
+                }
+                if (trailingIcon != null) trailingIcon()
+            }
+        }
+    )
 }
 
 @OptIn(ExperimentalFoundationApi::class)
